@@ -27,44 +27,130 @@ and also the following tactics
 variable (P Q R S : Prop)
 
 example : P → P ∨ Q := by
-  sorry
+  intro hP
+  left
+  exact hP
   done
 
 example : Q → P ∨ Q := by
-  sorry
+  intro hQ
+  right
+  exact hQ
   done
 
 example : P ∨ Q → (P → R) → (Q → R) → R := by
-  sorry
+  intros hPQ hPR hQR
+  cases' hPQ with hP hQ
+  apply hPR
+  exact hP
+  apply hQR
+  exact hQ
   done
 
 -- symmetry of `or`
 example : P ∨ Q → Q ∨ P := by
-  sorry
+  intro hPQ
+  cases' hPQ with hP hQ
+  right
+  exact hP
+  left
+  exact hQ
   done
 
 -- associativity of `or`
 example : (P ∨ Q) ∨ R ↔ P ∨ Q ∨ R := by
-  sorry
+-- Is there a simpler way to do this?
+  constructor <;>
+  intro h
+  cases' h with hPQ hR
+  cases' hPQ with hP hQ
+  left
+  exact hP
+  right
+  left
+  exact hQ
+  right
+  right
+  exact hR
+  cases' h with hP hQR
+  left
+  left
+  exact hP
+  cases' hQR with hQ hR
+  left
+  right
+  exact hQ
+  right
+  exact hR
   done
 
 example : (P → R) → (Q → S) → P ∨ Q → R ∨ S := by
-  sorry
+  intros hPR hQS hPQ
+  cases' hPQ with hP hQ
+  left
+  apply hPR
+  exact hP
+  right
+  apply hQS
+  exact hQ
   done
 
 example : (P → Q) → P ∨ R → Q ∨ R := by
-  sorry
+  intros hPQ hPR
+  cases' hPR with hP hR
+  left
+  apply hPQ
+  exact hP
+  right
+  exact hR
   done
 
 example : (P ↔ R) → (Q ↔ S) → (P ∨ Q ↔ R ∨ S) := by
-  sorry
+  intros hPR hQS
+  rw [hPR, hQS]
   done
 
 -- de Morgan's laws
 example : ¬(P ∨ Q) ↔ ¬P ∧ ¬Q := by
-  sorry
+-- Is there a simpler way to do this?
+  constructor <;>
+  intro h
+  constructor
+  intro hP
+  apply h
+  left
+  exact hP
+  intro hQ
+  apply h
+  right
+  exact hQ
+  intro hPQ
+  cases' hPQ with h1 h2 <;>
+  cases' h with hnP hnQ
+  apply hnP
+  exact h1
+  apply hnQ
+  exact h2
   done
 
 example : ¬(P ∧ Q) ↔ ¬P ∨ ¬Q := by
-  sorry
+-- Is there a simpler way to do this?
+  constructor <;>
+  intro h
+  by_cases hP : P
+  right
+  intro hQ
+  apply h
+  constructor
+  exact hP
+  exact hQ
+  left
+  exact hP
+  cases' h with hnP hnQ
+  intro ⟨hP, hQ⟩
+  apply hnP
+  exact hP
+  intro ⟨hP, hQ⟩
+  apply hnQ
+  exact hQ
   done

@@ -25,41 +25,90 @@ and also the following two new tactics:
 variable (P Q R S : Prop)
 
 example : P ↔ P := by
-  sorry
+  rfl
   done
 
 example : (P ↔ Q) → (Q ↔ P) := by
-  sorry
+  intro hPQ
+  rw [hPQ]
   done
 
 example : (P ↔ Q) ↔ (Q ↔ P) := by
-  sorry
+  constructor <;>
+  intro h <;>
+  rw [h]
   done
 
 example : (P ↔ Q) → (Q ↔ R) → (P ↔ R) := by
-  sorry
+  intros hPQ hQR
+  rw [hPQ, hQR]
   done
 
 example : P ∧ Q ↔ Q ∧ P := by
-  sorry
+  constructor <;>
+  intro h <;>
+  cases' h with h1 h2 <;>
+  constructor
+  exact h2
+  exact h1
+  exact h2
+  exact h1
   done
 
 example : (P ∧ Q) ∧ R ↔ P ∧ Q ∧ R := by
-  sorry
+  constructor <;>
+  intro h
+  rcases h with ⟨⟨h1, h2⟩, h3⟩
+  refine ⟨?_, ?_, ?_⟩
+  exact h1
+  exact h2
+  exact h3
+  rcases h with ⟨h1, ⟨h2, h3⟩⟩
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  exact h1
+  exact h2
+  exact h3
   done
 
 example : P ↔ P ∧ True := by
-  sorry
+  constructor <;>
+  intro h
+  constructor
+  exact h
+  triv
+  cases' h with hP hT
+  exact hP
   done
 
 example : False ↔ P ∧ False := by
-  sorry
+  constructor <;>
+  intro h
+  constructor
+  exfalso
+  exact h
+  exact h
+  cases' h with hP hF
+  exact hF
   done
 
 example : (P ↔ Q) → (R ↔ S) → (P ∧ R ↔ Q ∧ S) := by
-  sorry
+  intros hPQ hRS
+  rw [hRS, hPQ]
   done
 
 example : ¬(P ↔ ¬P) := by
-  sorry
+-- Is there an easier way to do this?
+  intro h
+  cases' h with h1 h2
+  apply h1
+  apply h2
+  intro hP
+  apply h1
+  exact hP
+  exact hP
+  apply h2
+  intro hP
+  apply h1
+  exact hP
+  exact hP
   done
