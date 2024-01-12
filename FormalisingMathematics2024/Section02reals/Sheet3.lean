@@ -117,10 +117,16 @@ theorem tendsTo_add_const {a : ℕ → ℝ} {t : ℝ} (c : ℝ) (h : TendsTo a t
 -- you're not quite ready for this one yet though.
 /-- If `a(n)` tends to `t` then `-a(n)` tends to `-t`.  -/
 example {a : ℕ → ℝ} {t : ℝ} (ha : TendsTo a t) : TendsTo (fun n => -a n) (-t) := by
+  rw [tendsTo_def] at *
   intro ε hε
-
-
-  sorry
+  cases' ha ε hε with B hB
+  use B
+  intro n
+-- Come back to this
+  rw [show |-a n - -t| = |a n - t| by (refine abs_eq_iff_mul_self_eq.mpr ?_; ring)]
+  specialize hB n
+  exact hB
+  done
 -- Try this one. You don't know enough material to do it yet!
 -- Where do you get stuck? The problem is that I didn't teach you
 -- any "API" for (a.k.a. theorems about) the absolute value function |.|.

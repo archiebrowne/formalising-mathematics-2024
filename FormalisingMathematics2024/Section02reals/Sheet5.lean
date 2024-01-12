@@ -14,7 +14,18 @@ open Section2sheet3solutions
 
 -- you can maybe do this one now
 theorem tendsTo_neg {a : ℕ → ℝ} {t : ℝ} (ha : TendsTo a t) : TendsTo (fun n ↦ -a n) (-t) := by
-  sorry
+  rw [tendsTo_def] at *
+  intro ε hε
+  obtain ⟨B, hB⟩ := ha ε hε
+  use B
+  intro n
+  specialize hB n
+-- Is there a way to do this with exact things?
+  rw [
+    show |-a n - -t| = |-(a n - t)| by (norm_num; ring_nf),
+    abs_neg _
+  ]
+  exact hB
 
 /-
 `tendsTo_add` is the next challenge. In a few weeks' time I'll
@@ -32,24 +43,22 @@ theorem tendsTo_add {a b : ℕ → ℝ} {t u : ℝ} (ha : TendsTo a t) (hb : Ten
     TendsTo (fun n ↦ a n + b n) (t + u) :=
   by
   rw [tendsTo_def] at *
-  -- let ε > 0 be arbitrary
+-- let ε be arbitrary
   intro ε hε
-  --  There's a bound X such that if n≥X then a(n) is within ε/2 of t
-  specialize ha (ε / 2) (by linarith)
-  cases' ha with X hX
-  --  There's a bound Y such that if n≥Y then b(n) is within ε/2 of u
-  obtain ⟨Y, hY⟩ := hb (ε / 2) (by linarith)
-  --  use max(X,Y),
-  use max X Y
-  -- now say n ≥ max(X,Y)
+-- find Na, Nb such that |a n - t|, |b n - u| < ε / 2 for n > Na, Nb resp
+  obtain ⟨Na, hNa⟩ := ha (ε / 2) (by linarith)
+  obtain ⟨Nb, hNb⟩ := hb (ε / 2) (by linarith)
+-- use the maximum of these n values, so that both inequalities are satisfied
+  use max Na Nb
   intro n hn
-  rw [max_le_iff] at hn
-  specialize hX n hn.1
-  specialize hY n hn.2
-  --  Then easy.
-  rw [abs_lt] at *
-  constructor <;>-- `<;>` means "do next tactic to all goals produced by this tactic"
-    linarith
+-- final calcluation, using the triangle inequality
+  calc
+    |a n + b n - (t + u)| = |(a n - t) + (b n - u)| := by ring_nf
+    _ ≤ |a n - t| + |b n - u| := by exact abs_add (a n - t) (b n - u)
+    _ < ε / 2 + ε / 2 := by refine add_lt_add ?_ ?_
+                            exact hNa n (by exact le_of_max_le_left hn)
+                            exact hNb n (by exact le_of_max_le_right hn)
+    _ = ε := by norm_num
 
 /-- If `a(n)` tends to t and `b(n)` tends to `u` then `a(n) - b(n)`
 tends to `t - u`. -/
