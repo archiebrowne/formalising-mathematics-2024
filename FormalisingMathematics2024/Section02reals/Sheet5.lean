@@ -65,8 +65,6 @@ tends to `t - u`. -/
 theorem tendsTo_sub {a b : ℕ → ℝ} {t u : ℝ} (ha : TendsTo a t) (hb : TendsTo b u) :
     TendsTo (fun n ↦ a n - b n) (t - u) := by
   -- this one follows without too much trouble from earlier results.
-  rw [tendsTo_def] at *
-  have h : TendsTo (-b) (-u) := by exact tendsTo_neg hb
-  exact tendsTo_add ha h
-
+  exact tendsTo_add ha (by exact tendsTo_neg hb)
+-- no need to do the rw of tendsTo_def.
 end Section2sheet5

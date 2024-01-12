@@ -30,19 +30,38 @@ Good luck!
 /-- If `a(n)` tends to `t` then `37 * a(n)` tends to `37 * t`-/
 theorem tendsTo_thirtyseven_mul (a : ℕ → ℝ) (t : ℝ) (h : TendsTo a t) :
     TendsTo (fun n ↦ 37 * a n) (37 * t) := by
-  sorry
+  rw [tendsTo_def] at *
+  intro ε hε
+  obtain ⟨B, hB⟩ := h (ε / 37) (by linarith)
+  use B
+  intro n hn
+  specialize hB n hn
+  rw [← mul_sub, abs_mul, abs_of_nonneg] <;>
+  linarith
+
 
 /-- If `a(n)` tends to `t` and `c` is a positive constant then
 `c * a(n)` tends to `c * t`. -/
 theorem tendsTo_pos_const_mul {a : ℕ → ℝ} {t : ℝ} (h : TendsTo a t) {c : ℝ} (hc : 0 < c) :
     TendsTo (fun n ↦ c * a n) (c * t) := by
-  sorry
+  rw [tendsTo_def] at *
+  intro ε hε
+  obtain ⟨B, hB⟩ := h (ε / c) (by exact div_pos hε hc)
+  use B
+  intro n hn
+  rw [← mul_sub, abs_mul, abs_of_nonneg]
+  ·exact (lt_div_iff' hc).mp (hB n hn)
+  ·linarith
 
 /-- If `a(n)` tends to `t` and `c` is a negative constant then
 `c * a(n)` tends to `c * t`. -/
 theorem tendsTo_neg_const_mul {a : ℕ → ℝ} {t : ℝ} (h : TendsTo a t) {c : ℝ} (hc : c < 0) :
     TendsTo (fun n ↦ c * a n) (c * t) := by
-  sorry
+-- we know by the previous that when the constant is positive, the result holds
+  obtain h' := @tendsTo_pos_const_mul a t h (-c) (by linarith)
+-- switch signs of h', simplify it, and then observe it is exactly the goal
+  simpa using tendsTo_neg h'
+
 
 /-- If `a(n)` tends to `t` and `c` is a constant then `c * a(n)` tends
 to `c * t`. -/
