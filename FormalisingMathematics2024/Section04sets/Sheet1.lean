@@ -76,18 +76,47 @@ Let's prove some theorems.
 
 -/
 
-example : A ⊆ A := by sorry
+example : A ⊆ A := by
+  intro x hx
+  assumption
 
-example : A ⊆ B → B ⊆ C → A ⊆ C := by sorry
+example : A ⊆ B → B ⊆ C → A ⊆ C := by
+  intro h1 h2 x hx
+  rw [subset_def] at *
+  specialize h1 x hx
+  specialize h2 x h1
+  assumption
 
-example : A ⊆ A ∪ B := by sorry
+example : A ⊆ A ∪ B := by
+  intro x hx
+  left
+  assumption
 
-example : A ∩ B ⊆ A := by sorry
+example : A ∩ B ⊆ A := by
+  intro x hx
+  exact hx.1
 
-example : A ⊆ B → A ⊆ C → A ⊆ B ∩ C := by sorry
+example : A ⊆ B → A ⊆ C → A ⊆ B ∩ C := by
+  intro h1 h2 x hx
+  rw [subset_def] at *
+  constructor
+  · exact h1 x hx
+  · exact h2 x hx
 
-example : B ⊆ A → C ⊆ A → B ∪ C ⊆ A := by sorry
+example : B ⊆ A → C ⊆ A → B ∪ C ⊆ A := by
+-- We can split up or hypotheses using rintro with the bar notation
+  rintro h1 h2 x (hxB | hxC)
+  ·exact h1 hxB
+  ·exact h2 hxC
 
-example : A ⊆ B → C ⊆ D → A ∪ C ⊆ B ∪ D := by sorry
+example : A ⊆ B → C ⊆ D → A ∪ C ⊆ B ∪ D := by
+  rintro h1 h2 x (_ | _)
+  ·left
+   exact h1 (by assumption)
+  ·right
+   exact h2 (by assumption)
 
-example : A ⊆ B → C ⊆ D → A ∩ C ⊆ B ∩ D := by sorry
+example : A ⊆ B → C ⊆ D → A ∩ C ⊆ B ∩ D := by
+  rintro h1 h2 x ⟨hA, hC⟩
+-- can contruct and types
+  exact ⟨h1 hA, h2 hC⟩

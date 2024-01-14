@@ -20,6 +20,10 @@ For example, if you have a hypothesis `h : x ∈ Aᶜ` and your goal
 is `False`, then `apply h` will work and will change the goal to `x ∈ A`.
 Think a bit about why, it's a good logic exercise.
 
+
+`h : x ∈ Aᶜ` is `h : x ∈ A → False`, So if the goal is `False`, we can `apply h`, and
+the goal becomes `x ∈ A`.
+
 -/
 
 
@@ -30,18 +34,53 @@ variable (X : Type) -- Everything will be a subset of `X`
   (x y z : X) -- x,y,z are elements of `X` or, more precisely, terms of type `X`
 
 -- x,y,z are elements of `X` or, more precisely, terms of type `X`
-example : x ∉ A → x ∈ A → False := by sorry
+example : x ∉ A → x ∈ A → False := by
+  intro h1 h2
+  apply h1
+  assumption
 
-example : x ∈ A → x ∉ A → False := by sorry
+example : x ∈ A → x ∉ A → False := by
+  intro h1 h2
+  apply h2
+  assumption
 
-example : A ⊆ B → x ∉ B → x ∉ A := by sorry
+example : A ⊆ B → x ∉ B → x ∉ A := by
+  intro h1 h2 h3
+  apply h2
+  exact h1 h3
 
 -- Lean couldn't work out what I meant when I wrote `x ∈ ∅` so I had
 -- to give it a hint by telling it the type of `∅`.
-example : x ∉ (∅ : Set X) := by sorry
+example : x ∉ (∅ : Set X) := by
+  intro h
+  cases h
 
-example : x ∈ Aᶜ → x ∉ A := by sorry
+example : x ∈ Aᶜ → x ∉ A := by
+  intro h1 h2
+  apply h1
+  exact h2
 
-example : (∀ x, x ∈ A) ↔ ¬∃ x, x ∈ Aᶜ := by sorry
+example : (∀ x, x ∈ A) ↔ ¬∃ x, x ∈ Aᶜ := by
+  constructor <;>
+  intro h
+  · intro h'
+    obtain ⟨x, hx⟩ := h'
+    apply hx
+    exact h x
+  · intro x
+    by_contra h''
+    apply h
+    use x
+    assumption
 
-example : (∃ x, x ∈ A) ↔ ¬∀ x, x ∈ Aᶜ := by sorry
+example : (∃ x, x ∈ A) ↔ ¬∀ x, x ∈ Aᶜ := by
+  constructor <;>
+  intro h
+  · intro h'
+    obtain ⟨x, hx⟩ := h
+    apply (h' x)
+    assumption
+  · by_contra h'
+    apply h
+    intro x hx
+    cases (h' (by use x))

@@ -8,7 +8,7 @@ import FormalisingMathematics2024.Solutions.Section02reals.Sheet5 -- import a bu
 
 namespace Section2sheet6
 
-open Section2sheet3solutions Section2sheet5solutions
+open Section2sheet3solutions Section2sheet5solutions Finset BigOperators
 
 /-
 
@@ -150,10 +150,11 @@ theorem tendsTo_unique (a : ℕ → ℝ) (s t : ℝ) (hs : TendsTo a s) (ht : Te
   obtain ⟨N1, hN1⟩ := hs (ε / 2) (by linarith)
   obtain ⟨N2, hN2⟩ := ht (ε / 2) (by linarith)
   rw [show s - t = (s - a (max N1 N2)) + (a (max N1 N2) - t) by ring]
-  calc |s - a (max N1 N2) + (a (max N1 N2) - t)| ≤ |s - a (max N1 N2)| + |a (max N1 N2) - t| := by sorry
+  --calc |s - a (max N1 N2) + (a (max N1 N2) - t)| ≤ |s - a (max N1 N2)| + |a (max N1 N2) - t| := by sorry
 -- need a simple way to do this
 -- try by contradiction
-
   sorry
+
+
 
 end Section2sheet6
