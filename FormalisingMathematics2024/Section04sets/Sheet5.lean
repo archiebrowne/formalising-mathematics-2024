@@ -35,22 +35,91 @@ variable (X : Type)
   (x y z : X)
 
 -- x,y,z are elements of `X` or, more precisely, terms of type `X`
-example : A ∪ A = A := by sorry
+example : A ∪ A = A := by
+  ext w
+  constructor
+  · rintro (_ | _)
+    <;> assumption
+  · intro h
+    left
+    assumption
 
-example : A ∩ A = A := by sorry
+example : A ∩ A = A := by
+  ext w
+  constructor
+  · rintro ⟨_, _⟩
+    assumption
+  · intro h
+    exact ⟨h, h⟩
 
-example : A ∩ ∅ = ∅ := by sorry
+example : A ∩ ∅ = ∅ := by
+  ext w
+  constructor
+  · rintro ⟨_, _⟩
+    assumption
+  · intro h
+    cases h
 
-example : A ∪ univ = univ := by sorry
+example : A ∪ univ = univ := by
+  ext w
+  constructor
+  · rintro (_ | _)
+    <;> triv
+  · intro _
+    right
+    triv
 
-example : A ⊆ B → B ⊆ A → A = B := by sorry
+example : A ⊆ B → B ⊆ A → A = B := by
+  intro h1 h2
+  ext w
+  constructor
+  <;> intro h3
+  · exact h1 h3
+  · exact h2 h3
 
-example : A ∩ B = B ∩ A := by sorry
+example : A ∩ B = B ∩ A := by
+  ext w
+  constructor
+  <;> rintro ⟨h, h'⟩
+  <;> exact ⟨h', h⟩
 
-example : A ∩ (B ∩ C) = A ∩ B ∩ C := by sorry
+example : A ∩ (B ∩ C) = A ∩ B ∩ C := by
+  ext w
+  constructor
+  · rintro ⟨ha, ⟨hb, hc⟩⟩
+    exact ⟨⟨ha, hb⟩, hc⟩
+  · rintro ⟨⟨ha, hb⟩, hc⟩
+    exact ⟨ha, ⟨hb, hc⟩⟩
 
-example : A ∪ (B ∪ C) = A ∪ B ∪ C := by sorry
+example : A ∪ (B ∪ C) = A ∪ B ∪ C := by
+  ext w
+  constructor
+  · rintro (ha | (hb | hc))
+    · left; left; exact ha
+    · left; right; exact hb
+    · right; exact hc
+  · rintro ((ha | hb) | hc)
+    · left; exact ha
+    · right; left; exact hb
+    · right; right; exact hc
 
-example : A ∪ B ∩ C = (A ∪ B) ∩ (A ∪ C) := by sorry
+example : A ∪ B ∩ C = (A ∪ B) ∩ (A ∪ C) := by
+  ext w
+  constructor
+  · rintro (ha | ⟨hb, hc⟩)
+    · exact ⟨mem_union_left B ha, mem_union_left C ha⟩
+    · exact ⟨mem_union_right A hb, mem_union_right A hc⟩
+  · rintro ⟨(ha | hb), (ha' | hc)⟩
+    all_goals try (left; assumption)
+    right; exact ⟨hb, hc⟩
 
-example : A ∩ (B ∪ C) = A ∩ B ∪ A ∩ C := by sorry
+
+example : A ∩ (B ∪ C) = A ∩ B ∪ A ∩ C := by
+  ext w
+  constructor
+  · rintro ⟨ha, (hb | hc)⟩
+    · left; exact ⟨ha, hb⟩
+    · right; exact ⟨ha, hc⟩
+  · rintro (⟨ha, hb⟩ | ⟨ha', hc⟩)
+    · exact ⟨ha, mem_union_left C hb⟩
+    · exact ⟨ha', mem_union_right B hc⟩
