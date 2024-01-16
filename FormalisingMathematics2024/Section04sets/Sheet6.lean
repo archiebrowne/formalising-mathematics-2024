@@ -61,16 +61,43 @@ example : f '' S ⊆ T ↔ S ⊆ f ⁻¹' T := by
 
 -- Pushforward and pullback along the identity map don't change anything
 -- pullback is not so hard
-example : id ⁻¹' S = S := by sorry
+example : id ⁻¹' S = S := by
+  ext w
+  constructor
+  <;> intro
+  <;> assumption
 
 -- pushforward is a little trickier. You might have to `ext x, split`.
-example : id '' S = S := by sorry
+example : id '' S = S := by
+  ext w
+  constructor
+  · intro ⟨k, ⟨hk1, hk2⟩⟩
+    dsimp at hk2
+    simpa [hk2] using hk1
+  · intro h
+    use w
+    exact ⟨h, rfl⟩
 
 -- Now let's try composition.
 variable (Z : Type) (g : Y → Z) (U : Set Z)
 
 -- preimage of preimage is preimage of comp
-example : g ∘ f ⁻¹' U = f ⁻¹' (g ⁻¹' U) := by sorry
+example : g ∘ f ⁻¹' U = f ⁻¹' (g ⁻¹' U) := by
+  ext w
+  constructor
+  <;> intro
+  <;> assumption
 
 -- preimage of preimage is preimage of comp
-example : g ∘ f '' S = g '' (f '' S) := by sorry
+example : g ∘ f '' S = g '' (f '' S) := by
+  ext w
+  constructor
+  · intro ⟨r, ⟨hr1, hr2⟩⟩
+    use (f r)
+    exact ⟨by (use r), hr2⟩
+  · intro ⟨r, ⟨⟨k, ⟨hr2, hr3⟩⟩, hr4⟩⟩
+    use k
+    constructor
+    · exact hr2
+    · dsimp
+      rw [hr3, hr4]
