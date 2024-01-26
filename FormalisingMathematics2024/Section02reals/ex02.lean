@@ -1,5 +1,6 @@
 import Mathlib.Tactic -- imports all the Lean tactics
 import FormalisingMathematics2024.Solutions.Section02reals.Sheet6 -- import a bunch of previous stuff
+import Mathlib.Order.CompleteLattice
 
 namespace experiment
 open Section2sheet3solutions Section2sheet5solutions Finset BigOperators
@@ -67,7 +68,6 @@ theorem cauchy_bounded (a : ℕ → ℝ) : cauchy a → Bounded a := by
       gcongr
       apply hM
       exact Nat.lt.base N}
-#check @le_sSup
 
 /- a sequence converges if it is monotone and bounded -/
 lemma mono_bounded_conv (a : ℕ → ℝ) : Monotone a ∧ Bounded a → converges a := by
@@ -76,7 +76,12 @@ lemma mono_bounded_conv (a : ℕ → ℝ) : Monotone a ∧ Bounded a → converg
   use L
   intro ε hε
   have : ∃ N, a N > L - ε := by
-    · sorry
+    · have : Set.Nonempty ({x | ∃ i, a i = x}) := by
+        · use (a 1); use 1
+      obtain ⟨aN, ⟨⟨N, hN⟩, _⟩⟩ := @Real.add_neg_lt_sSup ({x | ∃ i, a i = x}) (this) (-ε) (by linarith)
+      use N
+      dsimp
+      linarith
   obtain ⟨N, hN⟩ := this
   use N
   intro n hn
@@ -86,14 +91,15 @@ lemma mono_bounded_conv (a : ℕ → ℝ) : Monotone a ∧ Bounded a → converg
     rw [sub_lt_iff_lt_add]
     calc a n ≤ sSup {x | ∃ i, a i = x} := by {
       have : a n ∈ {x | ∃ i, a i = x} := by sorry
-      exact le_sSup this
+      sorry
     }
     _ < ε + sSup {x | ∃ i, a i = x} := by exact lt_add_of_pos_left (sSup {x | ∃ i, a i = x}) hε
   · rw [sub_lt_comm]
     calc L - ε < a N := by exact hN
     _ ≤ a n := by exact hM hn
-
-
+#check lt_sSup_iff
+#check sSup_le_iff
+#check Real.add_neg_lt_sSup
 /- for real numbers, cauchy and convergence criterion are equivalent -/
 theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
   constructor
@@ -121,8 +127,6 @@ theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
     obtain ⟨N, hN⟩ := h (ε / 2) (by linarith)
     use N
     intro n hn
-
-
     sorry
 
 /- two sums of the same terms can be subtracted and represented as one sum -/
@@ -194,33 +198,24 @@ theorem comparison_test (a b : ℕ → ℝ) (ha : ∀ n, a n ≥ 0) (hab : ∀ n
   apply mono_bounded_conv
   constructor
   · exact (partial_monotone a).mp ha
-  · obtain ⟨M, hM⟩ := hb
+  · have : Monotone (sum b) := by
+      · rw [← partial_monotone b]
+        intro n
+        obtain ha' := ha n
+        obtain hb' := hab n
+        linarith
+    rw [sum_conv_def, cauchy_iff_convergent] at hb
+    obtain ⟨M, hM⟩ := cauchy_bounded (sum b) hb
     use M
     intro n
-    have hbM : sum b n ≤ M := by
-      · by_contra hc
-        obtain ⟨B, hB⟩ := hM (|(M + (sum b n)) / 2 - M|) (by (
-          refine abs_pos.mpr ?_
-          intro hf
-          linarith))
-        specialize hB (B + n) (by linarith)
-        have hbMono : Monotone (sum b) := by
-          · rw [← partial_monotone b]
-            intro m
-            exact le_trans (ha m) (hab m)
-        have : sum b (B + n) < sum b n := by {
-          sorry}
-        unfold Monotone at hbMono
-        specialize hbMono (Nat.le_add_right n B)
-        rw [lt_iff_not_le, add_comm] at this
-        contradiction
-    rw [sum_def] at *
-    calc
-      |∑ i in range n, a i| = ∑ i in range n, a i := abs_sum_of_nonneg' ha
-      _ ≤ ∑ i in range n, b i := by
-        · gcongr with r hr
-          · exact hab r
-      _ ≤ M := hbM
+    calc |sum a n| ≤ |sum b n| := by
+          · simp only [sum_def]
+            rw [abs_sum_of_nonneg' ha, le_abs]
+            left
+            apply sum_le_sum
+            intro i _
+            exact hab i
+    _ ≤ M := by exact hM n
 
 /- The Sandwich Test: if cn ≤ an ≤ bn and the sums of both the cn and bn converges, then the same
 is true for an  -/
@@ -264,9 +259,6 @@ example (n t : ℕ) (f : ℕ → ℝ) :
   ∑ x in range (n + t), f x = ∑ x in range n, f x + ∑ x in range t, f (n + x) := by
   exact sum_range_add f n t
 
-#check sum_range_induction
-#check sum_range_sub'
-#check sum_range_succ'
 /- if the an/bn converges to L, and the sum of the bn converges, then so does the sum of the an -/
 theorem limit_test (a b : ℕ → ℝ) (h : converges (fun i ↦ (a i / b i))) (hb : sum_conv b) : sum_conv a := by
   sorry
