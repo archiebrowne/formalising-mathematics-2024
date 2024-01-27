@@ -1,10 +1,12 @@
-import Mathlib.Tactic -- imports all the Lean tactics
-import FormalisingMathematics2024.Solutions.Section02reals.Sheet6 -- import a bunch of previous stuff
-import Mathlib.Order.CompleteLattice
+import Mathlib.Tactic
 
-namespace experiment
-open Section2sheet3solutions Section2sheet5solutions Finset BigOperators
+namespace ProjectOne
+open Finset BigOperators
 
+/-- If `a(n)` is a sequence of reals and `t` is a real, `TendsTo a t`
+is the assertion that the limit of `a(n)` as `n → ∞` is `t`. -/
+def TendsTo (a : ℕ → ℝ) (t : ℝ) : Prop := -- **From K.Buzzard**
+  ∀ ε > 0, ∃ B : ℕ, ∀ n, B ≤ n → |a n - t| < ε
 /- partial sum of a sequence of real numbers a₀ + a₁ + ⋯ + aₙ₋₁ -/
 def sum (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ i in range n, a i
 def abs_sum (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ i in range n, |a i|
@@ -24,6 +26,8 @@ def Bounded (a : ℕ → ℝ) : Prop := ∃ M, ∀ n, |a n| ≤ M
 -- **Outcome** : this is fine (eval command is not used for this)
 
 @[simp]
+lemma tendsTo_def {a : ℕ → ℝ} {t : ℝ} : -- **From K.Buzzard**
+    TendsTo a t ↔ ∀ ε, 0 < ε → ∃ B : ℕ, ∀ n, B ≤ n → |a n - t| < ε := by rfl
 lemma sum_def (a : ℕ → ℝ) (n : ℕ) : sum a n = ∑ i in range n, a i := by rfl
 lemma abs_sum_def (a : ℕ → ℝ) (n : ℕ) : abs_sum a n = ∑ i in range n, |a i| := by rfl
 lemma converges_def (a : ℕ → ℝ) : converges a ↔ ∃ L, TendsTo a L := by rfl
@@ -89,17 +93,21 @@ lemma mono_bounded_conv (a : ℕ → ℝ) : Monotone a ∧ Bounded a → converg
   constructor
   · dsimp
     rw [sub_lt_iff_lt_add]
-    calc a n ≤ sSup {x | ∃ i, a i = x} := by {
-      have : a n ∈ {x | ∃ i, a i = x} := by sorry
-      sorry
-    }
+    calc a n ≤ sSup {x | ∃ i, a i = x} := by
+          · specialize hM (show n ≤ n + 1 by linarith)
+            set s := {x | ∃ i, a i = x} with hs
+            have hsbound : BddAbove s := by
+              · obtain ⟨R, hR⟩ := hB
+                use R
+                intro i ⟨k, hk⟩
+                rw [← hk]
+                exact le_of_abs_le (hR k)
+            exact le_csSup_of_le hsbound (by use n + 1) hM
     _ < ε + sSup {x | ∃ i, a i = x} := by exact lt_add_of_pos_left (sSup {x | ∃ i, a i = x}) hε
   · rw [sub_lt_comm]
     calc L - ε < a N := by exact hN
     _ ≤ a n := by exact hM hn
-#check lt_sSup_iff
-#check sSup_le_iff
-#check Real.add_neg_lt_sSup
+
 /- for real numbers, cauchy and convergence criterion are equivalent -/
 theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
   constructor
@@ -117,7 +125,7 @@ theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
         · rw [abs_sub_comm]
           exact hB m hm
     _ = ε := by ring_nf
-  · obtain ⟨A, hA⟩ := cauchy_bounded a h -- maybe dont need this direction, just stick with one way.
+  · obtain ⟨A, hA⟩ := cauchy_bounded a h -- maybe don't need this direction, just stick with one way.
     let b (n : ℕ) := - sSup {a i | i ≥ n}
     have bMon : Monotone b := by sorry
     have bBounded : Bounded b := by sorry
