@@ -48,7 +48,7 @@ so it is useful to give it in a lemma -/
 theorem cauchy_bounded (a : ℕ → ℝ) : cauchy a → Bounded a := by
   intro h
 /- we can bound the distance between terms by 1 after a certain `N` -/
-  obtain ⟨N, hN⟩ := h 1 (by norm_num)
+  obtain ⟨N, hN⟩ := h 1 (by positivity)
   specialize hN N
 /- `max'` of a set in `ℝ` gives the maximum as an element of `ℝ` when provided
 with a proof that the set is non empty  -/
@@ -135,7 +135,8 @@ bounded or non empty, so a supremum may not exist -/
 /- whilst `ℝ` is not a `CompleteLattice` (every non empty set has a supremum + infimum),
 it is a `ConditionallyCompleteLattice`, (non empty sets have suprema/imfima if they are
 bounded above/bellow) and lean infers this. `le_csSup_of_le` requires a proof that the
-set is bounded above in order to say anything useful about the `sSup` -/
+set is bounded above in order to say anything useful about the `sSup`. thanks to
+**K.Buzzard** for pointing this out in the discord. -/
             exact le_csSup_of_le hsbound (by use n + 1) hM
     _ < ε + sSup {x | ∃ i, a i = x} := by exact lt_add_of_pos_left (sSup {x | ∃ i, a i = x}) hε
 /- the next goal is much more abvious as it just relies on the fact that `a` is monotone -/
@@ -151,19 +152,33 @@ theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
 using the `<;>` notation -/
   <;> intro h
   · intro ε hε
+/- proving `converges a → cauchy a` is the easy direction. since we can eventually
+bound `|a n - L|` where `L` is the limit, we can use a triangle inequality to
+bound `|a n - a m|`-/
     obtain ⟨L, hL⟩ := h
-    obtain ⟨B, hB⟩ := hL (ε / 2) (by linarith)
+    obtain ⟨B, hB⟩ := hL (ε / 2) (by positivity)
     use B
     rintro n m ⟨hn, hm⟩
+/- this is the triangle inequality we would like to prove -/
     calc |a n - a m| = |(a n - L) + (L - a m)| := by ring_nf
+/- if the proof of a `calc` step is a one liner, we often don't need to enter
+tactic mode using `by` -/
     _ ≤ |a n - L| + |L - a m| := abs_add (a n - L) (L - a m)
     _ < ε / 2 + ε / 2 := by
+/- `gcongr` usefully splits up `a + b < c + d` into two goals `a < c` and `b + d` -/
       · gcongr
         · exact hB n hn
         · rw [abs_sub_comm]
           exact hB m hm
-    _ = ε := by ring_nf
-  · obtain ⟨A, hA⟩ := cauchy_bounded a h -- maybe don't need this direction, just stick with one way.
+    _ = ε := add_halves ε
+/- the next direction seems a lot harder, at least with the proof I wa attempting.
+my strategy was to show that the sequence of `bₙ = -sSup {a i | i ≥ n}` was monotone
+increasing, and bounded therefore convergent. Then show that `aₙ` converges to
+this limit multiplied by -1. The reason i tried with all the negatives was because
+`mono_bounded_conv` only allows for monotone increasing, not monotone decreasing.
+perhaps I should have allowed for both but at this point the project was getting
+quite long! A lesson I guess is to prove things in the correct generality from the start -/
+  · obtain ⟨A, hA⟩ := cauchy_bounded a h
     let b (n : ℕ) := - sSup {a i | i ≥ n}
     have bMon : Monotone b := by sorry
     have bBounded : Bounded b := by sorry
@@ -173,36 +188,56 @@ using the `<;>` notation -/
     obtain ⟨N, hN⟩ := h (ε / 2) (by linarith)
     use N
     intro n hn
+/- this inequality seems difficult to prove, I would need to find `a m` which is
+within `ε / 2` of the limit of the sequence `bₙ` using the fact is is defined
+by an `sSup` -/
     sorry
 
 /- two sums of the same terms can be subtracted and represented as one sum -/
 lemma sum_sub_range_sub (m n : ℕ) (h : m ≤ n) (f : ℕ → ℝ) :
   ∑ x in range n, f x - ∑ x in range m, f x = ∑ x in range (n - m), f (m + x) := by
+/- this lemma is *almost* in the library, this is just a rearrangement, since it
+occurs a couple of times in the proofs bellow -/
   refine tsub_eq_of_eq_add ?h
   obtain ⟨t, ht⟩ := Nat.exists_eq_add_of_le h
+/- `sum_range_add` is the key lemma, everythiing else is just rearangement -/
   rw [ht, Nat.add_sub_self_left m t, sum_range_add f m t]
   ring
 
 /- absolute convergence implies convergence -/
 lemma abs_conv : ∀ (a : ℕ → ℝ), sum_abs_conv a → sum_conv a := by
   intros a ha
-  rw [sum_conv_def, cauchy_iff_convergent]
-  rw [sum_abs_conv_def, cauchy_iff_convergent] at ha
+/- the proof of the lemma becomes much clearer when we unpack
+that `converges` is the same as `cauchy` -/
+  rw [sum_conv_def, sum_abs_conv_def, cauchy_iff_convergent] at *
   intro ε hε
   obtain ⟨N, hN⟩ := ha ε hε
   use N
-  intro m n ⟨hm, hn⟩ -- remove `⟨hm, hn⟩` replace with `hmn` if unused individually
+  intro m n ⟨hm, hn⟩
   specialize hN m n ⟨hm, hn⟩
+/- we need to be able to assume that one of `m`, `n` is less than or
+equal to the other. the `wlog` tactic allows us to do this. once
+used, we must supply a proof that we can reach the same goal using
+this neq assumption -/
   wlog h : m ≤ n generalizing m n
-  · specialize this n m hn hm (by rwa [abs_sub_comm] at hN) (by (rw [Nat.le_iff_lt_or_eq]; left; exact Nat.not_le.mp h))
+  · specialize this n m hn hm (by rwa [abs_sub_comm] at hN)
+                              (by (rw [Nat.le_iff_lt_or_eq]; left; exact Nat.not_le.mp h))
     simpa [abs_sub_comm] using this
   rw [abs_sub_comm]
   calc |sum a n - sum a m| = |∑ x in range (n - m), a (m + x)| := by
+/- assuming `m ≤ n` is useful at this stage, since `n - m` appears in the
+range of a sum. additionally, we find the first use of our lemma
+`sum_sub_range_sub` -/
         · rw [← sum_sub_range_sub m n h a]
           simp only [← sum_def a]
+/- this is the triangle inequality for sums -/
   _ ≤ ∑ x in range (n - m), |a (m + x)| := abs_sum_le_sum_abs _ _
   _ < ε := by
+/- `sum_sub_range_sub` takes in a function `ℕ → ℝ`, and we would like to
+apply it to the sequence `|aₙ|`, so we give it a function describing this
+sequence `fun x ↦ |a x|` -/
     · rw [← sum_sub_range_sub m n h (fun x ↦ |a x|)]
+/- the rest of this part is proving that the goal is equivalent to `hN` -/
       simp only [← abs_sum_def]
       apply lt_of_abs_lt
       rw [abs_sub_comm]
