@@ -7,18 +7,19 @@ open Finset BigOperators
 is the assertion that the limit of `a(n)` as `n → ∞` is `t`. -/
 def TendsTo (a : ℕ → ℝ) (t : ℝ) : Prop := -- **From K.Buzzard**
   ∀ ε > 0, ∃ B : ℕ, ∀ n, B ≤ n → |a n - t| < ε
-/- partial sum of a sequence of real numbers a₀ + a₁ + ⋯ + aₙ₋₁ -/
+/-- partial sum of a sequence of real numbers `a₀ + a₁ + ⋯ + aₙ₋₁` -/
 def sum (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ i in range n, a i
+/-- partial absolute sum of a sequence of real numbers `|a₀| + |a₁| + ⋯ + |aₙ₋₁|`-/
 def abs_sum (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ i in range n, |a i|
-/- a sequence of real numbers converges if it has a limit -/
+/-- a sequence of real numbers converges if it has a limit -/
 def converges (a : ℕ → ℝ) : Prop := ∃ L, TendsTo a L
-/- a sequence of real numbers is cauchy if its terms become, and remain, arbitrarily close -/
+/-- a sequence of real numbers is cauchy if its terms become, and remain, arbitrarily close -/
 def cauchy (a : ℕ → ℝ) : Prop := ∀ ε > 0, ∃ (N : ℕ), ∀ (n m : ℕ), (n ≥ N ∧ m ≥ N → |a n - a m| < ε)
-/- a sum converges if the sequence of partial sums converges -/
+/-- a sum converges if the sequence of partial sums converges -/
 def sum_conv (a : ℕ → ℝ) : Prop := converges (sum a)
-/- a sum converges *absolutley* if the sequence of absolute sums converges -/
+/-- a sum converges *absolutley* if the sequence of absolute sums converges -/
 def sum_abs_conv (a : ℕ → ℝ) : Prop := converges (abs_sum a)
-/- a sequence is bounded if we can find M such that |a n| ≤ M ∀ n -/
+/-- a sequence is bounded if we can find M such that |a n| ≤ M ∀ n -/
 def Bounded (a : ℕ → ℝ) : Prop := ∃ M, ∀ n, |a n| ≤ M
 
 #eval sum (fun n ↦ n) 10 -- `Real.ofCauchy (sorry /- 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, ... -/)` ??
@@ -35,7 +36,7 @@ lemma sum_conv_def (a : ℕ → ℝ) : sum_conv a ↔ converges (sum a) := by rf
 lemma sum_abs_conv_def (a : ℕ → ℝ) : sum_abs_conv a ↔ converges (abs_sum a) := by rfl
 lemma cauchy_def (a : ℕ → ℝ) : cauchy a ↔ ∀ ε > 0, ∃ (N : ℕ), ∀ (n m : ℕ), (n ≥ N ∧ m ≥ N → |a n - a m| < ε) := by rfl
 
-/- any term in a sequence can be represented as a telescoping sum -/
+/-- any term in a sequence can be represented as a telescoping sum -/
 lemma sum_range_succ_sub (a : ℕ → ℝ) (n : ℕ) : a n = sum a (n + 1) - sum a n := by
 /- this lemma is easily deducible from the library, but is use a ocuple of times,
 so it is useful to give it in a lemma -/
@@ -44,7 +45,7 @@ so it is useful to give it in a lemma -/
   rw [eq_sub_iff_add_eq]
   exact (sum_range_succ_comm a n).symm
 
-/- if a sequence is cauchy, then it is bounded -/
+/-- if a sequence is cauchy, then it is bounded -/
 theorem cauchy_bounded (a : ℕ → ℝ) : cauchy a → Bounded a := by
   intro h
 /- we can bound the distance between terms by 1 after a certain `N` -/
@@ -88,7 +89,7 @@ the distance between terms is less than 1, and before it, all terms are less tha
         exact Nat.lt.base N
 
 
-/- a sequence converges if it is monotone and bounded -/
+/-- a sequence converges if it is monotone and bounded -/
 lemma mono_bounded_conv (a : ℕ → ℝ) : Monotone a ∧ Bounded a → converges a := by
   intro ⟨hM, hB⟩
 /- if a sequence is monotone and bounded, then it converges to the supremum of its terms -/
@@ -144,7 +145,7 @@ set is bounded above in order to say anything useful about the `sSup`. thanks to
     calc L - ε < a N := by exact hN
     _ ≤ a n := by exact hM hn
 
-/- for real numbers, cauchy and convergence criterion are equivalent -/
+/-- for real numbers, cauchy and convergence criterion are equivalent -/
 theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
 /- `constructor` allows us to split the goal into the two directions -/
   constructor
@@ -193,7 +194,7 @@ within `ε / 2` of the limit of the sequence `bₙ` using the fact is is defined
 by an `sSup` -/
     sorry
 
-/- two sums of the same terms can be subtracted and represented as one sum -/
+/-- two sums of the same terms can be subtracted and represented as one sum -/
 lemma sum_sub_range_sub (m n : ℕ) (h : m ≤ n) (f : ℕ → ℝ) :
   ∑ x in range n, f x - ∑ x in range m, f x = ∑ x in range (n - m), f (m + x) := by
 /- this lemma is *almost* in the library, this is just a rearrangement, since it
@@ -204,7 +205,7 @@ occurs a couple of times in the proofs bellow -/
   rw [ht, Nat.add_sub_self_left m t, sum_range_add f m t]
   ring
 
-/- absolute convergence implies convergence -/
+/-- absolute convergence implies convergence -/
 lemma abs_conv : ∀ (a : ℕ → ℝ), sum_abs_conv a → sum_conv a := by
   intros a ha
 /- the proof of the lemma becomes much clearer when we unpack
@@ -243,52 +244,69 @@ sequence `fun x ↦ |a x|` -/
       rw [abs_sub_comm]
       exact hN
 
-/- if a sum converges its terms must tend to zero -/
+/-- if a sum converges its terms must tend to zero -/
 lemma sum_conv_zero : ∀ (a : ℕ → ℝ), sum_conv a → TendsTo a 0 := by
   intro a ⟨L, hL⟩ ε hε
-  obtain ⟨N, hN⟩ := hL (ε / 2) (by linarith)
+  obtain ⟨N, hN⟩ := hL (ε / 2) (by positivity)
   use N
   intro n hn
+/- since we know the sum converges, it is helpful to write `a n` as
+the difference of two sums, and this is what our lemma `sum_range_succ_sub`
+allos us to do -/
   rw [sub_zero, sum_range_succ_sub a n]
+/- now we have `a n` in this form, we can use the triangle inequality
+aswell as the fact that `sum a → L` to prove the inequality -/
   calc |sum a (n + 1) - sum a n| = |(sum a (n + 1) - L) - (sum a n - L)| := by ring_nf
-  _ ≤ |sum a (n + 1) - L| + |sum a n - L| := by exact abs_sub (sum a (n + 1) - L) (sum a n - L)
+  _ ≤ |sum a (n + 1) - L| + |sum a n - L| := abs_sub (sum a (n + 1) - L) (sum a n - L)
   _ < ε / 2 + ε / 2 := by
+/- `gcongr` is again helpful in proving inequalities involving sums -/
     · gcongr
       · exact hN (n + 1) (by linarith)
       · exact hN n hn
-  _ = ε := by linarith
+  _ = ε := add_halves ε
 
-/- a sequence is nonnegative iff the partial sums are monotone increasing -/
+/-- a sequence is nonnegative iff the partial sums are monotone increasing -/
 lemma partial_monotone (a : ℕ → ℝ) : (∀ (n : ℕ), a n ≥ 0) ↔ Monotone (sum a) := by
   constructor
   · intro h x y hxy
+/- proving the sum of non negative values up to `x` is less than the
+sum up to `y` where `x ≤ y` is not too tricky, and made easier by the
+`sum_sub_range_sub` lemma we proved earlier -/
     dsimp [sum_def]
     refine sub_nonneg.mp ?_
     rw [sum_sub_range_sub x y hxy a]
     refine sum_nonneg ?_
     intro i _
     exact h (x + i)
+/- the next direction is easier, and it is again useful to
+write `a n` as the difference of two sums, using `sum_range_succ_sub` -/
   · intro h n
     specialize h (Nat.le_add_right n 1)
     rw [sum_range_succ_sub a n]
     linarith
 
-/- The Comparison Test: if an ≤ bn and the sum of bn's converges, then the same is true for an -/
-theorem Comparison_Test (a b : ℕ → ℝ) (ha : ∀ n, a n ≥ 0) (hab : ∀ n, a n ≤ b n) (hb : sum_conv b) : sum_conv a := by
+/-- The Comparison Test: if an ≤ bn and the sum of bn's converges,
+then the same is true for an -/
+theorem Comparison_Test (a b : ℕ → ℝ) (ha : ∀ n, a n ≥ 0) (hab : ∀ n, a n ≤ b n)
+(hb : sum_conv b) : sum_conv a := by
+/- finally, we arrive at the first main theorem, the sandwich test. the strategy of
+the proof is to prove that `sum a` is both bounded and monotone, and then by
+`mono_bounded_conv` we will be done -/
   rw [sum_conv_def]
   apply mono_bounded_conv
   constructor
+/- `sum a ` is monotone: this simple using `partial_monotone` which we proved earlier -/
   · exact (partial_monotone a).mp ha
-  · have : Monotone (sum b) := by
-      · rw [← partial_monotone b]
-        intro n
-        obtain ha' := ha n
-        obtain hb' := hab n
-        linarith
-    rw [sum_conv_def, cauchy_iff_convergent] at hb
+/- `sum a` is bounded: this is true because since `sum b` converges, it is
+cauchy, and hence bounded via `cauchy_bounded`. the rest of the proof
+is showing that this same upper bound works for `sum a` -/
+  · rw [sum_conv_def, cauchy_iff_convergent] at hb
     obtain ⟨M, hM⟩ := cauchy_bounded (sum b) hb
     use M
     intro n
+/- this next inequality is simple mathematically, but requires some
+justification since we need to tell lean that both the sums are
+of nonnegative values -/
     calc |sum a n| ≤ |sum b n| := by
           · simp only [sum_def]
             rw [abs_sum_of_nonneg' ha, le_abs]
@@ -298,10 +316,12 @@ theorem Comparison_Test (a b : ℕ → ℝ) (ha : ∀ n, a n ≥ 0) (hab : ∀ n
             exact hab i
     _ ≤ M := by exact hM n
 
-/- The Sandwich Test: if cn ≤ an ≤ bn and the sums of both the cn and bn converges, then the same
+/-- The Sandwich Test: if cn ≤ an ≤ bn and the sums of both the cn and bn converges, then the same
 is true for an  -/
 theorem Sandwich_Test (a b c : ℕ → ℝ) (hca : ∀ n, c n ≤ a n) (hab : ∀ n, a n ≤ b n) (hc : sum_conv c)
   (hb : sum_conv b) : sum_conv a := by
+/- the strategy here was to convert all mentions of `converges` to `cauchy`,
+and show that `sum a` is cauchy -/
   rw [sum_conv_def, cauchy_iff_convergent, cauchy_def] at *
   intros ε hε
   obtain ⟨Nc, hNc⟩ := hc ε hε
@@ -310,18 +330,30 @@ theorem Sandwich_Test (a b c : ℕ → ℝ) (hca : ∀ n, c n ≤ a n) (hab : �
   intros n m hnm
   specialize hNb n m ⟨le_of_max_le_right hnm.1, le_of_max_le_right hnm.2⟩
   specialize hNc n m ⟨le_of_max_le_left hnm.1, le_of_max_le_left hnm.2⟩
+/- `|x| < ε ↔ x < ε ∧ -x < ε`, and each of the conjuncts are easier to prove
+than `|x| < ε` on its own. so we split up both the goal and `hNb`, `hNc` into this
+form -/
   rw [abs_sub_lt_iff] at *
+/- again, we use `wlog` to assume the order of `m`, `n`. this is
+helpful when we use `sum_sub_range_sub` later -/
   wlog h : m ≤ n generalizing n m
   · exact (this m n hnm.symm hNb.symm hNc.symm (Nat.le_of_not_ge h)).symm
   constructor
+/- `sum a n - sum a m < ε` since `sum b n - sum b m < ε` by assumption -/
   · calc
     sum a n - sum a m ≤ sum b n - sum b m := by
       · simp only [sum_def]
+/- once we tell lean that `sum` quantities are just `∑`'s and convert them into
+single sums, things become easier. here we need to make use of `h`, the assumption
+that `m ≤ n` -/
         rw [sum_sub_range_sub m n h a, sum_sub_range_sub m n h b]
         refine sum_le_sum ?_
         intro i _
         exact hab (m + i)
-    _ < ε := by exact hNb.1
+    _ < ε := hNb.1
+/- `sum a m - sum a n < ε` since `-ε < sum c n - sum c m` by assumption, although
+this is a slightly different form to what our assumption says, so
+a little justification is required -/
   · rw [← neg_sub, neg_lt]
     calc
     -ε < sum c n - sum c m := by
@@ -335,17 +367,30 @@ theorem Sandwich_Test (a b c : ℕ → ℝ) (hca : ∀ n, c n ≤ a n) (hab : �
         intro i _
         exact hca (m + i)
 
--- spent ages proving / trying to find this only to realise the addition of n + x was flipped in the library
+/- finally, a small remark: I spent quite a while trying to prove this example, only
+to realise that it was already in the library as `sum_range_add`. the reason
+`exact?` did not work was because I had written `x + n` and not `n + x` in the
+second sum in the statment. perhaps seeing beyone these intricacies is something
+that lean needs to improve upon in order to become more accessible for more people -/
 example (n t : ℕ) (f : ℕ → ℝ) :
-  ∑ x in range (n + t), f x = ∑ x in range n, f x + ∑ x in range t, f (n + x) := by
-  exact sum_range_add f n t
+  ∑ x in range (n + t), f x = ∑ x in range n, f x + ∑ x in range t, f (n + x) :=
+  sum_range_add f n t
 
-/- if the an/bn converges to L, and the sum of the bn converges, then so does the sum of the an -/
-theorem limit_test (a b : ℕ → ℝ) (h : converges (fun i ↦ (a i / b i))) (hb : sum_conv b) : sum_conv a := by
-  sorry
--- alternating series test: need definition of alternating
--- ratio test
-theorem ratio_test (a : ℕ → ℝ) (h : ∃ r < 1, TendsTo (fun i ↦ |(a (i + 1) / a i)|) r) : sum_abs_conv a := by sorry
--- root test
-theorem root_test (a : ℕ → ℝ) (h : ∃ r < 1, TendsTo (fun i ↦ |a i|^(1 / i)) r) : sum_abs_conv a := by sorry
--- #lint
+/-
+Well, that was rather long - bellow is a few things I had originally aimed at proving,
+but realised that they would take a lot more time.
+-/
+
+/-- The Limit Test: if the `a n / b n` converges to `L`, and the sum of the `b n`
+converges, then so does the sum of the `a n` -/
+theorem Limit_Test (a b : ℕ → ℝ) (h : converges (fun i ↦ (a i / b i)))
+(hb : sum_conv b) : sum_conv a := by sorry
+/-- The Ratio Test: if `a (n + 1) / a n` converges to `r < 1`, then the sum of the `a n`
+converges absoloutley -/
+theorem Ratio_Test (a : ℕ → ℝ)
+(h : ∃ r < 1, TendsTo (fun i ↦ |(a (i + 1) / a i)|) r) : sum_abs_conv a := by sorry
+/-- The Root Test: if `|a n|^(1 / n)` converges to `r < 1`, the the sum of the `a n`
+convrges absoloutley -/
+theorem Root_Test (a : ℕ → ℝ)
+(h : ∃ r < 1, TendsTo (fun i ↦ |a i|^(1 / i)) r) : sum_abs_conv a := by sorry
+#lint
