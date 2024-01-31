@@ -3,6 +3,15 @@ import Mathlib.Tactic
 namespace ProjectOne
 open Finset BigOperators
 
+/-
+In this file, I prove both the Comparison Test and the Sandwich Test for infinite sums
+of real numbers. Before this, some auxillary definitions and lemmas are made / proven.
+
+I have used the definition of `TendsTo` from the formalising mathematics course sheets.
+Additionally I written my own definitions of sums, absolute sums, cauchy sequences and
+bounded sequences as well has what it means for a sum to converge.
+-/
+
 /-- If `a(n)` is a sequence of reals and `t` is a real, `TendsTo a t`
 is the assertion that the limit of `a(n)` as `n → ∞` is `t`. -/
 def TendsTo (a : ℕ → ℝ) (t : ℝ) : Prop := -- **From K.Buzzard**
@@ -22,10 +31,6 @@ def sum_abs_conv (a : ℕ → ℝ) : Prop := converges (abs_sum a)
 /-- a sequence is bounded if we can find M such that |a n| ≤ M ∀ n -/
 def Bounded (a : ℕ → ℝ) : Prop := ∃ M, ∀ n, |a n| ≤ M
 
-#eval sum (fun n ↦ n) 10 -- `Real.ofCauchy (sorry /- 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, ... -/)` ??
-#eval ∑ i in range 11, i -- `55`
--- **Outcome** : this is fine (eval command is not used for this)
-
 @[simp] -- tell these definitions to the simplifier
 lemma tendsTo_def {a : ℕ → ℝ} {t : ℝ} : -- **From K.Buzzard**
     TendsTo a t ↔ ∀ ε, 0 < ε → ∃ B : ℕ, ∀ n, B ≤ n → |a n - t| < ε := by rfl
@@ -36,17 +41,17 @@ lemma sum_conv_def (a : ℕ → ℝ) : sum_conv a ↔ converges (sum a) := by rf
 lemma sum_abs_conv_def (a : ℕ → ℝ) : sum_abs_conv a ↔ converges (abs_sum a) := by rfl
 lemma cauchy_def (a : ℕ → ℝ) : cauchy a ↔ ∀ ε > 0, ∃ (N : ℕ), ∀ (n m : ℕ), (n ≥ N ∧ m ≥ N → |a n - a m| < ε) := by rfl
 
-/-- any term in a sequence can be represented as a telescoping sum -/
+/-- any term in a sequence can be represented as the difference of two sums -/
 lemma sum_range_succ_sub (a : ℕ → ℝ) (n : ℕ) : a n = sum a (n + 1) - sum a n := by
-/- this lemma is easily deducible from the library, but is use a ocuple of times,
+/- this lemma is easily deducible from the library, but is uses a couple of times,
 so it is useful to give it in a lemma -/
-  dsimp [sum_def]
-/- once lean knows `sum` is just a finite `∑`, the proof is short -/
+  dsimp only [sum_def]
+/- once lean knows `sum` is just a `∑`, the proof is short -/
   rw [eq_sub_iff_add_eq]
   exact (sum_range_succ_comm a n).symm
 
 /-- if a sequence is cauchy, then it is bounded -/
-theorem cauchy_bounded (a : ℕ → ℝ) : cauchy a → Bounded a := by
+lemma cauchy_bounded (a : ℕ → ℝ) : cauchy a → Bounded a := by
   intro h
 /- we can bound the distance between terms by 1 after a certain `N` -/
   obtain ⟨N, hN⟩ := h 1 (by positivity)
@@ -146,7 +151,7 @@ set is bounded above in order to say anything useful about the `sSup`. thanks to
     _ ≤ a n := by exact hM hn
 
 /-- for real numbers, cauchy and convergence criterion are equivalent -/
-theorem cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
+lemma cauchy_iff_convergent (a : ℕ → ℝ) : converges a ↔ cauchy a := by
 /- `constructor` allows us to split the goal into the two directions -/
   constructor
 /- for both goals, we need to introduce a hypothesis, and this can be done
@@ -367,9 +372,9 @@ a little justification is required -/
         intro i _
         exact hca (m + i)
 
-/- finally, a small remark: I spent quite a while trying to prove this example, only
-to realise that it was already in the library as `sum_range_add`. the reason
-`exact?` did not work was because I had written `x + n` and not `n + x` in the
+/- finally, a small remark: I spent quite a while trying to prove this example when proving
+`sum_sub_range_sub`, only to realise that it was already in the library as `sum_range_add`.
+the reason `exact?` did not work was because I had written `x + n` and not `n + x` in the
 second sum in the statment. perhaps seeing beyone these intricacies is something
 that lean needs to improve upon in order to become more accessible for more people -/
 example (n t : ℕ) (f : ℕ → ℝ) :
