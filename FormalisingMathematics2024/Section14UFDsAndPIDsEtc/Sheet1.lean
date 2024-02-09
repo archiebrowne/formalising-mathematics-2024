@@ -31,14 +31,20 @@ example : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0 := by
 
 -- typeclass inference
 -- magically extracts the assumption from `IsDomain`
-example : (0 : R) ≠ 1 := sorry
+example : (0 : R) ≠ 1 := by exact zero_ne_one
 
-example (I : Ideal R) : I.IsPrincipal := sorry
+example (I : Ideal R) : I.IsPrincipal := by
+  exact IsPrincipalIdealRing.principal I
 
-example (I : Ideal R) : ∃ j, I = Ideal.span {j} := sorry
+example (I : Ideal R) : ∃ j, I = Ideal.span {j} := by
+  exact Submodule.IsPrincipal.principal I
 
 -- product of two PIDs isn't a PID, but only becuase it's not a domain
 example (A B : Type) [CommRing A] [CommRing B]
     [IsPrincipalIdealRing A] [IsPrincipalIdealRing B] :
     IsPrincipalIdealRing (A × B) where
-  principal I := sorry
+  principal I := by
+
+
+
+  sorry

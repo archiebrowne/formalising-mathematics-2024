@@ -57,19 +57,40 @@ splitting into cases in this proof.
 example : TopologicalSpace X where
   IsOpen (s : Set X) := s = ∅ ∨ s = Set.univ -- empty set or whole thing
   isOpen_univ := by
-    sorry -- use `dsimp`
+    · dsimp
+      right
+      triv -- use `dsimp`
   isOpen_inter := by
-    sorry -- use `cases'`
+    · rintro s t (rfl | rfl) (rfl | rfl)
+      · left; simp
+      · left; simp
+      · left; simp
+      · right; simp
+            -- use `cases'`
   isOpen_sUnion := by
-    intro F
+    intro F hF
+    by_cases h : Set.univ ∈ F
+    · right
+      aesop
+    · left
+      have : ∀ s ∈ F, s = ∅ := by
+        · intro s hs
+          by_contra! h2
+          rcases h2 with ⟨a, b⟩
+          specialize hF s hs
+          cases' hF with x y
+          · simp_all only [Set.mem_empty_iff_false]
+          · rw [y] at hs
+            contradiction
+      exact Set.sUnion_eq_empty.mpr this
     -- do cases on whether Set.univ ∈ F
-    sorry
+
 
 -- `isOpen_empty` is the theorem that in a topological space, the empty set is open.
 -- Can you prove it yourself? Hint: arbitrary unions are open
 
 example (X : Type) [TopologicalSpace X] : IsOpen (∅ : Set X) := by
-  sorry
+  convert isOpen_sUnion (s := ∅) ?_ <;> simp
 
 -- The reals are a topological space. Let's check Lean knows this already
 #synth TopologicalSpace ℝ
@@ -83,13 +104,33 @@ def Real.IsOpen (s : Set ℝ) : Prop :=
 
 -- Now let's prove the axioms
 lemma Real.isOpen_univ : Real.IsOpen (Set.univ : Set ℝ) := by
-  sorry
+  intro x hx
+  use 1
+  norm_num
 
 lemma Real.isOpen_inter (s t : Set ℝ) (hs : IsOpen s) (ht : IsOpen t) : IsOpen (s ∩ t) := by
-  sorry
+  intro x hx
+  obtain ⟨δ1, ⟨h1l, h1r⟩⟩ := hs x hx.1
+  obtain ⟨δ2, ⟨h2l, h2r⟩⟩ := ht x hx.2
+  use min δ1 δ2
+  constructor
+  · exact lt_min h1l h2l
+  · intro y
+    intro ⟨l, r⟩
+    refine ⟨(h1r y ⟨?_, ?_⟩), (h2r y ⟨?_, ?_⟩)⟩
+    all_goals linarith [min_le_left δ1 δ2, min_le_right δ1 δ2]
+
 
 lemma Real.isOpen_sUnion (F : Set (Set ℝ)) (hF : ∀ s ∈ F, IsOpen s) : IsOpen (⋃₀ F) := by
-  sorry
+  intro x hx
+  obtain ⟨s, ⟨hsF, hxs⟩⟩ := hx
+  obtain ⟨δ, ⟨hδ1, hδ2⟩⟩ := hF s hsF x hxs
+  use δ
+  refine ⟨hδ1, ?_⟩
+  intro y hy
+  use s
+  exact ⟨hsF, hδ2 y hy⟩
+
 
 -- now we put everything together using the notation for making a structure
 example : TopologicalSpace ℝ where

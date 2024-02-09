@@ -84,9 +84,12 @@ variable (L : Type) [Lattice L] (a b c : L)
 example : a ⊔ b = b ⊔ a := by
   -- you might want to start with `apply le_antisymm` (every lattice is a partial order so this is OK)
   -- You'll then have two goals so use `\.` and indent two spaces.
-  sorry
+  apply le_antisymm
+  · exact sup_le le_sup_right le_sup_left
+  · exact sup_le le_sup_right le_sup_left
 
 example : a ⊔ b ⊔ c = a ⊔ (b ⊔ c) := by
+  apply le_antisymm
   sorry
 
 -- could golf this entire proof into one (long) line

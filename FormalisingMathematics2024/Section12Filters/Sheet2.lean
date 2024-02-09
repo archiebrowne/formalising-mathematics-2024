@@ -46,12 +46,30 @@ open Filter Set
 open scoped Filter
 -- for 𝓟 notation
 
-example (S T : Set α) : 𝓟 S ≤ 𝓟 T ↔ S ⊆ T := sorry
+example (S T : Set α) : 𝓟 S ≤ 𝓟 T ↔ S ⊆ T := by
+  rw [le_def]
+  constructor
+  · intro h
+    specialize h T (mem_principal_self T)
+    rwa [← mem_principal]
+  · intro h K hK
+    rw [mem_principal] at hK ⊢
+    intro x hx
+    exact hK (h hx)
 
 -- Here's another useful lemma about principal filters.
 -- It's called `le_principal_iff` in mathlib but why
 -- not try proving it yourself?
-example (F : Filter α) (S : Set α) : F ≤ 𝓟 S ↔ S ∈ F := sorry
+example (F : Filter α) (S : Set α) : F ≤ 𝓟 S ↔ S ∈ F := by
+  rw [le_def]
+  constructor
+  · intro h
+    specialize h S (mem_principal_self S)
+    exact h
+  · intro h x hx
+    rw [mem_principal] at hx
+    exact mem_of_superset h hx
+
 
 /-
 
@@ -63,9 +81,15 @@ the intersection of `Fᵢ.sets` is also a filter. Let's check this.
 -/
 def lub {I : Type} (F : I → Filter α) : Filter α where
   sets := {X | ∀ i, X ∈ F i}
-  univ_sets := sorry
-  sets_of_superset := sorry
-  inter_sets := sorry
+  univ_sets := by
+    intro i
+    exact (F i).univ_sets
+  sets_of_superset := by
+    intro P Q hP hPQ i
+    exact (F i).sets_of_superset (hP i) hPQ
+  inter_sets := by
+    intro P Q hP hQ i
+    exact (F i).inter_sets (hP i) (hQ i)
 
 /-
 
@@ -74,11 +98,20 @@ two axioms.
 
 -/
 -- it's an upper bound
-example (I : Type) (F : I → Filter α) (i : I) : F i ≤ lub F := sorry
+example (I : Type) (F : I → Filter α) (i : I) : F i ≤ lub F := by
+  rw [le_def]
+  intro X hX
+  exact hX i
+
 
 -- it's ≤ all other upper bounds
 example (I : Type) (F : I → Filter α) (G : Filter α) (hG : ∀ i, F i ≤ G) :
-    lub F ≤ G := sorry
+    lub F ≤ G := by
+  rw [le_def]
+  intro x hx i
+  specialize hG i
+  rw [le_def] at hG
+  exact hG x hx
 
 /-
 
@@ -97,10 +130,21 @@ def glb {I : Type} (F : I → Filter α) : Filter α :=
   lub fun G : {G : Filter α | ∀ i, (F i).sets ⊆ G.sets} ↦ G.1
 
 -- it's a lower bound
-example (I : Type) (F : I → Filter α) (i : I) : glb F ≤ F i := sorry
+example (I : Type) (F : I → Filter α) (i : I) : glb F ≤ F i := by
+  rintro X hX ⟨G, hG⟩
+  dsimp
+  exact hG i hX
 
 -- it's ≥ all other lower bounds
 example (I : Type) (F : I → Filter α) (G : Filter α) (hG : ∀ i, G ≤ F i) :
-    G ≤ glb F := sorry
+    G ≤ glb F := by
+  rintro X hX
+  unfold glb at hX
+  dsimp at hX
+  unfold lub at hX
+  dsimp at hX
+  specialize hX ⟨G, _⟩
+  · exact hG
+  · exact hX
 
 end Section12sheet2

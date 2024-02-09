@@ -76,13 +76,20 @@ noncomputable example (R : Type) [CommRing R] [IsDomain R] (φ : R → ℕ)
   let φ' : R → ℕ := fun r => if r = 0 then 0 else 1 + φ r
   have h' (a b : R) : ∃ q r : R,
     a = b * q + r ∧ (b = 0 ∧ q = 0 ∧ r = a ∨ b ≠ 0 ∧ φ' r < φ' b)
-  · sorry
+  ·
+    sorry
   choose quot rem h'' using h'
   exact
     { quotient := quot
-      quotient_zero := sorry
+      quotient_zero := by
+        intro a
+        rcases h'' a 0 with ⟨-, (⟨-, ⟨ha, -⟩⟩ | ⟨f, -⟩)⟩
+        · exact ha
+        · exfalso; apply f; rfl
       remainder := rem
-      quotient_mul_add_remainder_eq := sorry
+      quotient_mul_add_remainder_eq := by
+        intro a b
+        rw [← (h'' a b).1]
       r := fun a b => φ' a < φ' b
       r_wellFounded := sorry
       remainder_lt := sorry
