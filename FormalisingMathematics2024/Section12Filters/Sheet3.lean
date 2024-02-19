@@ -33,9 +33,24 @@ open Set
 
 def atTop (L : Type) [LinearOrder L] (e : L) : Filter L where
   sets := {X : Set L | ∃ x : L, ∀ y, x ≤ y → y ∈ X}
-  univ_sets := sorry
-  sets_of_superset := sorry
-  inter_sets := sorry
+  univ_sets := by
+    use e
+    intro y hy
+    triv
+  sets_of_superset := by
+    rintro P Q ⟨x, hx⟩ hPQ
+    use x
+    intro y hy
+    specialize hx y hy
+    exact hPQ hx
+  inter_sets := by
+    intro P Q ⟨a, ha⟩ ⟨b, hb⟩
+    use max a b
+    intro y hy
+    constructor
+    · exact ha y (le_of_max_le_left hy)
+    · exact hb y (le_of_max_le_right hy)
+
 /-
 
 ## the cofinite filter
@@ -62,9 +77,20 @@ that you can probably guess them yourself.
 -/
 def cofinite (α : Type) : Filter α where
   sets := {S : Set α | Sᶜ.Finite}
-  univ_sets := sorry
-  sets_of_superset := sorry
-  inter_sets := sorry
+  univ_sets := by
+    dsimp
+    rw [compl_univ]
+    exact finite_empty
+  sets_of_superset := by
+    intro P Q hP hPQ
+    dsimp
+    apply (Finite.subset hP)
+    exact compl_subset_compl.mpr hPQ
+  inter_sets := by
+    intro P Q hP hQ
+    dsimp at hP hQ ⊢
+    rw [compl_inter]
+    exact Finite.union hP hQ
 
 /-
 
@@ -78,5 +104,45 @@ If you like this filter stuff, then formalise in Lean and prove the following:
 (4) Prove that the cofinite filter on `ℕ` is not principal.
 
 -/
+
+open scoped Filter
+
+/-- cofinite filter on a finite type is the entire power set `⊥`. -/
+example (α : Type) : cofinite (Fintype α) = ⊥ := by
+  ext X
+  constructor <;>
+  intro _
+  · triv
+  · exact toFinite Xᶜ
+example (p q : Prop) : (p → q) ↔ (¬ q → ¬ p) := by exact Iff.symm not_imp_not
+
+
+/-- the cofinite filter on `ℕ` is the `atTop` filter. -/
+example : cofinite ℕ = atTop ℕ 0 := by
+  ext X
+  constructor <;>
+  intro h
+  · have : Xᶜ.Finite := by exact h
+    rw [finite_iff_bddAbove] at this
+    obtain ⟨L, hL⟩ := this
+    use L + 1
+    intro y hy
+    by_contra h'
+    specialize hL h'
+    linarith
+  · obtain ⟨L, hL⟩ := h
+    refine finite_iff_bddAbove.mpr ?_
+    use L
+    intro r hr
+    by_contra hr'
+    specialize hL r (by linarith)
+    contradiction
+
+/-- the cofinite filter on `ℤ` is not equal to the `atTop` fliter. -/
+example : cofinite ℤ ≠ atTop ℤ 0 := by sorry
+
+/-- the cofinite filter on `ℕ` is not principal. -/
+example : ∀ (X : Set ℕ), cofinite ℕ ≠ 𝓟 X := by sorry
+
 
 end Section12sheet3
