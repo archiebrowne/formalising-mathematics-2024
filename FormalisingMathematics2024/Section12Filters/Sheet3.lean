@@ -138,11 +138,74 @@ example : cofinite ℕ = atTop ℕ 0 := by
     specialize hL r (by linarith)
     contradiction
 
+
 /-- the cofinite filter on `ℤ` is not equal to the `atTop` fliter. -/
-example : cofinite ℤ ≠ atTop ℤ 0 := by sorry
+example : cofinite ℤ ≠ atTop ℤ 0 := by
+  intro h
+  let A : Set ℤ := {x | 0 ≤ x}
+  have h1 : A ∈ atTop ℤ 0 := by
+    · use 0
+      intro y hy
+      exact hy
+  have h2 : ¬ A ∈ cofinite ℤ := by
+    · intro h
+      have : ¬ Aᶜ.Finite := by
+        · rw [finite_iff_bddBelow_bddAbove]
+          push_neg
+          intro ⟨M, hM⟩ _
+          obtain hM':= hM (show -1 ∈ Aᶜ by simp)
+          have : M - 1 ∈ Aᶜ := by
+            simp only [mem_compl_iff, mem_setOf_eq, sub_nonneg, not_le]
+            linarith
+          specialize hM this
+          linarith
+      contradiction
+  simp_all only [not_true_eq_false]
 
 /-- the cofinite filter on `ℕ` is not principal. -/
-example : ∀ (X : Set ℕ), cofinite ℕ ≠ 𝓟 X := by sorry
+example : ∀ (X : Set ℕ), cofinite ℕ ≠ 𝓟 X := by
+  intro X hX
+  have hXco : X ∈ cofinite ℕ := by
+    · rw [hX]
+      exact Filter.mem_principal_self X
+  have Xub : BddAbove Xᶜ := by
+    · rw [← finite_iff_bddAbove]
+      exact hXco
+  obtain ⟨L, hL⟩ := Xub
+  let Y : Set ℕ := {y | L + 2 ≤ y}
+  have : Y ∈ cofinite ℕ := by
+    · have hYc : Yᶜ = {y | y < L + 2} := by
+        · dsimp only [Y]
+          ext z
+          simp only [mem_compl_iff, mem_setOf_eq, sub_nonneg, not_le]
+      dsimp only
+      have : Set.Finite Yᶜ := by
+        · rw [finite_iff_bddAbove]
+          use L + 2
+          intro z hz
+
+          apply (show z < L + 2 → z ≤ L + 2 by exact?)
+          rw [hYc] at hz
+          exact hz
+      exact this
+  have : X ⊆ Y := by
+    · simp_all only [Filter.mem_principal]
+  specialize this (show L + 1 ∈ X by {
+    have : ¬ L + 1 ∈ Xᶜ := by
+      · intro hL'
+        specialize hL hL'
+        linarith
+    simpa [mem_compl_iff, not_not] using this
+  })
+  rw [mem_setOf_eq] at this
+  linarith
+
+
+
+
+
+
+sorry
 
 
 end Section12sheet3
