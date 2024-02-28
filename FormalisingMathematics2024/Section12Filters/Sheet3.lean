@@ -183,8 +183,7 @@ example : ∀ (X : Set ℕ), cofinite ℕ ≠ 𝓟 X := by
         · rw [finite_iff_bddAbove]
           use L + 2
           intro z hz
-
-          apply (show z < L + 2 → z ≤ L + 2 by exact?)
+          apply le_of_lt
           rw [hYc] at hz
           exact hz
       exact this
