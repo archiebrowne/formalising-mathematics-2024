@@ -14,10 +14,10 @@ are those at the bottom of *Section12Filters.Sheet3* in the course repository. T
 the user defined definitions for the `atTop` and `cofinite` filters in that sheet.
 
 The main results in this section are the following:
-* `exercise_01_proof`
-* `exercise_02_proof`
-* `exercise_03_proof`
-* `exercise_04_proof`
+- `exercise_01_proof`: `cofinite α` is the power set `⊥` when `α` is a Fintype.
+- `exercise_02_proof`: `cofinite ℕ` is the `atTop` filter.
+- `exercise_03_proof`: `cofinite ℤ` is not the `atTop` filter.
+- `exercise_04_proof`: `cofinite ℕ` is not principal.
 
 
 ## Section Two: Ultrafilter Lemma + Tychonoff
@@ -33,15 +33,15 @@ Although used implicitly in my proof (Lean's version is used), I have proven my 
 version of the ultrafilter lemma for completness.
 
 THe main results in this seciton are the following:
-* `isAtomic_filter` - The lattice of filters is atomic
-* `my_exists_le` - My implementation of the ultrafilter lemma
-* `my_tychonoff`- Tychonoff's Theorem
+- `isAtomic_filter`: The lattice of filters is atomic.
+- `my_exists_le`   : My implementation of the ultrafilter lemma.
+- `my_tychonoff`   : Tychonoff's Theorem.
 
 -/
 
 namespace ProjectTwo
 open Filter Set
-open scoped Filter Topology -- Allows for `𝓟` and `𝓝` notation respecivley.
+open scoped Filter Topology -- Allows for `𝓟` and `𝓝` notation respectively.
 
 section ExerciseSheet
 
@@ -82,21 +82,18 @@ def cofinite (α : Type) : Filter α where
     apply (Finite.subset hP)
     exact compl_subset_compl.mpr hPQ
   inter_sets := by
-    intro P Q hP hQ
-    dsimp at hP hQ ⊢
-    rw [compl_inter]
-    exact Finite.union hP hQ
+    simp_all [compl_inter]
 
 /-- **EX 01** The cofinite filter on a finite type `α` is the entire power set `⊥`.
 Since the ordering `f ≤ g ↔ g.sets ⊆ f.sets` forms a `CompleteLattice` on filters,
 `⊥` is indeed the whole power set of `α` since the power set of `α` forms a filter,
-and no filter can be "smaller" with respect to `≤`. -/
+and no filter can be "smaller" (contain more sets) with respect to `≤`. -/
 theorem exercise_01_proof (α : Type) (h : Fintype α) : cofinite α = ⊥ := by
 /- Writing `f = g` for filters `f`, `g` is notation for `f.sets = g.sets`.
 Both of which are sets of sets, so `ext` is the tactic to be used. -/
   ext X
   constructor <;>
-  intro _
+  intro
 /- `⊥` is the power set of `α`, so `X` is of course in it. -/
   · triv
 /- `h` is a proof that `α` is finite. `toFinite` infers from this
@@ -116,8 +113,8 @@ we know `X ∈ cofinite ℕ` we have that there is some upper bound `L` for `X�
 a number for which all numbers greater are in `X`. `L + 1` works because
 `L` is an upper bound for `Xᶜ`. -/
     use L + 1
-/- The rest of this half of the proof ammounts to showing that if `L + 1 ≤ y`
-then we must have `y ∈ X`, since `y` is not in `Xᶜ`. -/
+/- The rest of this half of the proof ammounts to showing that if `L + 1 ≤ y`,
+then we must have `y ∈ X` since `y` is not in `Xᶜ`. -/
     intro y hy
     by_contra h'
     specialize hL h'
@@ -140,7 +137,7 @@ we would have `r ∈ X`. But `hr` says `r ∈ Xᶜ`. -/
     contradiction
 
 /-
-The next two exercises involved comming up with counterexamples, and involved using
+The next two exercises involved coming up with counterexamples, and involved using
 a lot of `have` blocks. After one of Kevin's Lectures I understood that this was not
 in good style. So for these two I thought I would try out a more "Mathlib-esque" style
 and prove lots of small lemmas before providing the main proof.
@@ -152,7 +149,7 @@ def Exercise03 : Prop := cofinite ℤ ≠ atTop ℤ 0
 /- The two filters are not equal as their collection of sets are different.
 We need to provide a set which is in one but not the other. -/
 
-/-- `A` is the set of nonnegative integers -/
+/-- `A` is the set of nonnegative integers. -/
 def A : Set ℤ := {x | 0 ≤ x}
 lemma A_def : A = {x | 0 ≤ x} := by rfl
 
@@ -167,13 +164,13 @@ lemma A_compl_not_finite : ¬ Aᶜ.Finite := by
   rw [finite_iff_bddBelow_bddAbove]
   push_neg
   intro ⟨M, hM⟩ _
-  have : -1 ∈ Aᶜ := by
-    · rw [A_def, mem_compl_iff, nmem_setOf_iff]
-      linarith
+  have : -1 ∈ Aᶜ
+  · rw [A_def, mem_compl_iff, nmem_setOf_iff]
+    linarith
   obtain hM':= hM this
-  have : M - 1 ∈ Aᶜ := by
-    · rw [A_def, mem_compl_iff, nmem_setOf_iff]
-      linarith
+  have : M - 1 ∈ Aᶜ
+  · rw [A_def, mem_compl_iff, nmem_setOf_iff]
+    linarith
   specialize hM this
   linarith
 
@@ -186,6 +183,8 @@ lemma A_not_in_cofinite : ¬ A ∈ cofinite ℤ := by
 /-- **Proof of Exercise03**, made short due to the auxillary lemmas. -/
 theorem exercise_03_proof : Exercise03 := by
   intro h
+/- If we know a proposition `p` is false, we can change the goal to `¬ p`
+and prove that instead using `absurd`. -/
   absurd A_not_in_cofinite
   simp only [h, A_in_atTop]
 
@@ -199,27 +198,24 @@ variable (h : cofinite ℕ = 𝓟 X)
 
 /-- `X` is in the cofinite filter. -/
 lemma X_in_cofinite : X ∈ cofinite ℕ := by
-  rw [h]
-  exact Filter.mem_principal_self X
+  simpa [h] using Filter.mem_principal_self X
 
 /-- The complement of `X` is bounded above. -/
 lemma X_compl_bddAbove : BddAbove Xᶜ := by
-  rw [← finite_iff_bddAbove]
-  exact X_in_cofinite X h
+  simpa [← finite_iff_bddAbove] using X_in_cofinite X h
 
 /- We need to provide a set that is in `cofinite ℕ`, but not `𝓟 X`.
 Here we define `Y`. -/
 
 /-- `Y l` is the set of Naturals at least `l + 2`. The addition
-of `2` gives us sufficient lee-way to reach a contradiction. -/
+of `2` gives us sufficient leeway to reach a contradiction. -/
 def Y : Set ℕ := {y | l + 2 ≤ y}
 lemma Y_def : Y l = {y | l + 2 ≤ y} := by rfl
 
 /-- `(Y l)ᶜ` is the set of Naturals less than `l + 2`. -/
 lemma Y_compl_eq : (Y l)ᶜ = {y | y < l + 2} := by
-  rw [Y_def]
-  ext z
-  simp only [mem_compl_iff, mem_setOf_eq, not_le]
+  simp_rw [Y_def, lt_iff_not_le]
+  rfl
 
 /-- `(Y l)ᶜ` is finite. -/
 lemma Y_compl_finite : Set.Finite (Y l)ᶜ := by
@@ -236,18 +232,17 @@ lemma Y_in_cofinite : Y l ∈ cofinite ℕ := by
 
 /-- `X` is a subset of `Y`. -/
 lemma X_subset_Y : X ⊆ Y l := by
-  rw [← mem_principal, ← h]
-  exact Y_in_cofinite l
+  simpa [← mem_principal, ← h] using Y_in_cofinite l
 
 /-- **Proof of Exercise04** The cofinite filter on `ℕ` is not principal. -/
 theorem exercise_04_proof : Exercise04 X := by
   obtain ⟨L, hL⟩ := X_compl_bddAbove X h
   absurd (X_subset_Y X L h)
   intro h'
-  have : L + 1 ∈ X := by
+  have : L + 1 ∈ X
 /- It turned out to be easier to prove that `L + 1 ∉ Xᶜ`, and
 that is what these rewrites change the goal to. -/
-    rw [← compl_compl X, mem_compl_iff]
+  · rw [← compl_compl X, mem_compl_iff]
     intro hL'
     specialize hL hL'
     linarith
@@ -265,11 +260,11 @@ variable {ι X : Type} {π : ι → Type} {H : Set X}
 variable [∀ i, TopologicalSpace (π i)] [TopologicalSpace X]
 
 /- In a Lattice, there is a notion of 'Atomic' elements. These are elements
-with no elements between it and `⊥`. A Lattice `IsAtomic` if every element
+with no elements between them and `⊥`. A Lattice `IsAtomic` if every element
 has an atom bellow it. `Filter X` forms a Lattice, and since we can show that
 an `Atom` is infact an ultrafilter, it is enough to show `IsAtomic (Filter X)`.
 After this, we can unfold this in the context of Filters, and this is what we
-do in `MyExists_le`, giving the usual interpretation of the ultrafilter lemma. -/
+do in `my_exists_le`, giving the usual interpretation of the ultrafilter lemma. -/
 
 -- Credit to Kevin for getting me to type the line:
 
@@ -279,7 +274,7 @@ do in `MyExists_le`, giving the usual interpretation of the ultrafilter lemma. -
 
 /-- The lattice of filters on `X` is Atomic. -/
 instance isAtomic_filter : IsAtomic (Filter X) := by
-/- The orderind on filters is counterintuetive, if `f ≤ g` then
+/- The ordering on filters is counterintuitive, if `f ≤ g` then
 this means that `g.sets ⊆ f.sets`. For this reason we need a version of
 Zorn's lemma which works for finding a 'least element'. i.e an ultrafilters
 are 'small' with respect to `≤`. -/
@@ -304,15 +299,17 @@ all principal filters generated by points in `X`. Then the smallest filter
 (w.r.t `≤`) 'less' than all of them is the power set of `X`. i.e `⊥`. -/
     refine sInf_neBot_of_directed' hne ?_ hcnbot
 /- It turns out that chains do indeed have this directed property since for any
-`x y` in a chain we have `x ≤ y` or `y ≤ x`. So the maximum of `x y` is bigger than both. -/
+`x y` in a chain we have `x ≤ y` or `y ≤ x`. So the maximum of `x, y` is bigger than both. -/
     apply IsChain.directedOn
-/- `hc` says that `c` is a chain, so the rest of the proof is just giving lean this information. -/
+/- `hc` says that `c` is a chain, so the rest of the proof is just giving Lean this
+information. -/
     intro F hF G hG hFG
     specialize hc hF hG hFG
     simp_rw [ge_iff_le] at hc ⊢
     exact Or.comm.mpr hc
 
-/-- **The Ultrafilter Lemma** Any filter on `X` not equal to `⊥` is extensible to an ultrafilter. -/
+/-- **The Ultrafilter Lemma** Any filter on `X` not equal to `⊥` is extensible
+to an ultrafilter. -/
 theorem my_exists_le (f : Filter X) [h : NeBot f] : ∃ u : Ultrafilter X, ↑u ≤ f := by
 /- In an atomic lattice, every emelent is either `⊥` or has an atom bellow it. -/
   cases' IsAtomic.eq_bot_or_exists_atom_le f with h1 h2
@@ -327,7 +324,7 @@ use for the claim. -/
     exact haf
 
 /-- The statment that `f(l₁) ≤ l₂ ↔ l₁ ≤ f⁻¹(l₂)` where `g(h)` is the image of the
-filter `h` under the map `g`. The same statment as `tendsto_iff_comap` but with
+filter `h` under the map `g`. The same statement as `tendsto_iff_comap` but with
 my own proof. -/
 theorem my_tendsto_iff_comap {α β : Type} {f : α → β} {l₁ : Filter α} {l₂ : Filter β} :
     Tendsto f l₁ l₂ ↔ l₁ ≤ l₂.comap f := by
@@ -337,15 +334,15 @@ theorem my_tendsto_iff_comap {α β : Type} {f : α → β} {l₁ : Filter α} {
   · intro h s hs
     exact h (preimage_mem_comap hs)
 
-/-- **MyTychonoff** The product of arbitrary compact sets is compact. The statment
+/-- **MyTychonoff** The product of arbitrary compact sets is compact. The statement
 here is the same as `isCompact_pi_infinite` but the proof is my own. -/
 theorem my_tychonoff {s : ∀ i, Set (π i)} :
     (∀ i, IsCompact (s i)) → IsCompact { x : ∀ i, π i | ∀ i, x i ∈ s i } := by
--- this is where `of_le` is used
 /- A space is compact if and only if all ultrafilters on the space converge to some point.
 This lemma interprest "all ultrafilters on `s i` as "all filters on `∀ i, Set (π i)` less than
 `𝓟 (s i)`." In this way we don't need to talk about the type of filters on one of the factors,
-which could get messy, since `s i` is not a Type, but a term. -/
+which could get messy, since `s i` is not a Type, but a term. The proof of this result is where
+the ultrafilter lemma is used. -/
   simp only [isCompact_iff_ultrafilter_le_nhds]
   intro h f hf
 /- A filter is less than a principal filter on a set if and only if that set is in the filter. -/
@@ -354,44 +351,45 @@ which could get messy, since `s i` is not a Type, but a term. -/
 we can prove that the "i'th projection" of `f` onto each factor `s i` is an ultrafilter,
 then it must converge. Then we would like to show that `f` on the product space
 converges to the product of these points. -/
-  have : ∀ i, ∃ xᵢ, xᵢ ∈ s i ∧ Tendsto (Function.eval i) f (𝓝 xᵢ) := by
+  have : ∀ i, ∃ xᵢ, xᵢ ∈ s i ∧ Tendsto (Function.eval i) f (𝓝 xᵢ)
 /- Note that `Function.eval i` looks scary but it is really just the projection map onto
 a factor. Also `Tendsto m f g` just means that `f.map m ≤ g` i.e the image of `f` under the map
-`m` is bounded by `g`. If `g` is a neighbourhood filter, this means that `m(f)` converges which is how
-I have used it. I did initially write this as `f.map (fun r ↦ r i) ≤ 𝓝 xₜ`, which is equivalent,
-until I discovered the `Tendsto` proposition. -/
-    · intro i
+`m` is bounded by `g`. If `g` is a neighbourhood filter, this means that `m(f)` converges
+which is how I have used it. I did initially write this as `f.map (fun r ↦ r i) ≤ 𝓝 xₜ`,
+which is equivalent, until I discovered the `Tendsto` proposition. -/
+  · intro i
 /- Lean knows that the map of an ultrafliter is also an ultrafilter. -/
-      apply h i (f.map (Function.eval i))
+    apply h i (f.map (Function.eval i))
 /- The coercion of a map is the map of the coercion. -/
-      dsimp only [Ultrafilter.coe_map]
+    dsimp only [Ultrafilter.coe_map]
 /- We want to show that one filter is `≤` another, so we need to show an inculsion of sets. This
 is a `∀` type goal, so `intro` is the correct choice. -/
-      intro y hy
+    intro y hy
 /- `y` is in the image of a map  on `f` if and only if the preimage of `y` is in `f`. -/
-      rw [mem_map]
+    rw [mem_map]
 /- `hf` says that `{x | ∀ (i : ι), x i ∈ s i} ∈ ↑f` so if we can show that `y` contains this set,
 we must also have `y ∈ f` by definition of a filter. -/
-      apply mem_of_superset hf
+    apply mem_of_superset hf
 /- Again, an inclusion of sets means `intro` is the correct tactic. -/
-      intro x hx
-      specialize hx i
-/- `x ∈ m⁻¹(y)` ↔ `m(x) ∈ y` for a map `m`. We then evaluate the function on `x` to
+    intro x hx
+    specialize hx i
+/- `x ∈ m⁻¹(y) ↔ m(x) ∈ y` for a map `m`. We then evaluate the function on `x` to
 simplify the goal. -/
-      rw [mem_preimage, Function.eval]
+    rw [mem_preimage, Function.eval]
 /- We have `y ∈ 𝓟 (s i)` so `s i ⊆ y`. -/
-      rw [mem_principal] at hy
-      exact hy hx
+    rw [mem_principal] at hy
+    exact hy hx
 /- Given a hypothesis such as `∀ a, ∃ b, P a b` for a proposition `P`, we can construct
 a new element as a function of `a`, which returns the `b` for which `P a b` holds using
 the `choose` tactic. This is exactly the element we need show that `f` converges to. -/
   choose x hx using this
   use x
-/- We need to show that `x` is indeed in the product of the sets, and also that `f` converges it. -/
+/- We need to show that `x` is indeed in the product of the sets, and also
+that `f` converges it. -/
   constructor
   · intro i
     exact (hx i).1
-/- `nhds_pi` says that the neighbourhood on an elemnt of a product is the
+/- `nhds_pi` says that the neighbourhood on an element of a product is the
 product of the neighbourhoods of each projection. This product is defined as
 an `iInf`, `Filter.pi`. i.e it is the smallest filter on the product space
 generated by the preimages of all the neighoburhoods of projections of `x`. -/
