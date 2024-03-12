@@ -29,6 +29,7 @@ example : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0 := by
   intro a b
   apply eq_zero_or_eq_zero_of_mul_eq_zero
 
+
 -- typeclass inference
 -- magically extracts the assumption from `IsDomain`
 example : (0 : R) ≠ 1 := by exact zero_ne_one
@@ -44,6 +45,7 @@ example (A B : Type) [CommRing A] [CommRing B]
     [IsPrincipalIdealRing A] [IsPrincipalIdealRing B] :
     IsPrincipalIdealRing (A × B) where
   principal I := by
+
 
 
 
