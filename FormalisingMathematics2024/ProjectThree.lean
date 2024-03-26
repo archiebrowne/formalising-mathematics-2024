@@ -125,7 +125,7 @@ lemma mono_empty_eq_one : (monomial (s ∅)) 1 = (1 : MvPolynomial X R) := rfl
 /- With some basic API developed for the polynomials we are working with, we are ready to proceed
 with the definition of a `sqFreeMonomial`. -/
 
-/-- Subtype for square free monomials. A `MvPolynomial` is a `sqFreeMonomial` if it can be
+/-- Subtype for square free monomials. An `MvPolynomial` is a `sqFreeMonomial` if it can be
 written as a monomial with support an indicator function, and coefficient `1`. -/
 def sqFreeMonomial (X R : Type) [CommRing R] :=
     {m : MvPolynomial X R // ∃ (A : Finset X), m = monomial (s A) 1}
@@ -345,9 +345,9 @@ is zero. -/
   exact s_mem_ne_zero (M.supp) y hy
 
 /-- If `1` is not in the basis of a square free monomial ideal, then it is not in the ideal. -/
-lemma one_nelem_basis_nelem_span (I : SqFreeMonomialIdeal X R) (h : 1 ∉ I.basis) : 1 ∉ I.ideal := by
+lemma one_nelem_basis_nelem_span (I : SqFreeMonomialIdeal X R) : 1 ∉ I.ideal := by
   intro h'
-  have := one_nelem_basis_le_ker I h h'
+  have := one_nelem_basis_le_ker I (I.one_nelem) h'
   simp_all only [RingHom.mem_ker, map_one, one_ne_zero]
 
 /- # Stanley-Reisner Correspondence -/
@@ -363,7 +363,6 @@ def stanleyReisnerComplex (I : SqFreeMonomialIdeal X R) : AbstractSimplicialComp
       absurd (Ideal.eq_top_iff_one (I.ideal)).mp h
 /- Here we need the previous lemma. -/
       apply one_nelem_basis_nelem_span
-      exact I.one_nelem
   down_closed := by
     · rintro s t hs hts ht
       dsimp at hs ht
@@ -402,7 +401,7 @@ lemma sri_basis_eq (Δ : AbstractSimplicialComplex X) :
 /-- `1` is not contained in the stanley reisner ideal. -/
 lemma sri_one_nin_ideal (Δ : AbstractSimplicialComplex X) :
     (1 : MvPolynomial X R) ∉ (stanleyReisnerIdeal X R Δ).ideal :=
-  one_nelem_basis_nelem_span (stanleyReisnerIdeal X R Δ) (sri_one_nin_basis Δ)
+  one_nelem_basis_nelem_span (stanleyReisnerIdeal X R Δ)
 
 /-- The stanley reisner face ring of and abstract simplicial complex `Δ`. The elements are the
 monomials corresponding to the faces of `Δ `. -/
