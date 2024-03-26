@@ -97,8 +97,8 @@ lemma s_eq_zero_or_one (A : Finset X) (x : X) : (s A) x = 0 ∨ (s A) x = 1 := b
   exact em' (x ∈ A)
 
 lemma s_eq_elem_elem {A B : Finset X} {x : X} (h1 : s A = s B) (h2 : x ∈ A) : x ∈ B := by
-  have : (s B) x = 1 := by
-    · simpa [h1] using (s_eq_one_iff A x).mpr h2
+  have : (s B) x = 1
+  · simpa [h1] using (s_eq_one_iff A x).mpr h2
   exact (s_eq_one_iff B x).mp this
 
 lemma s_eq_iff_supp_eq (A B : Finset X) : s A = s B ↔ A = B := by
@@ -315,8 +315,8 @@ lemma one_nelem_basis_le_ker (I : SqFreeMonomialIdeal X R) (h : 1 ∉ I.basis) :
   rw [SetLike.mem_coe, RingHom.mem_ker, ← hM2, sqFreeMonomial.eq_mono, eval_monomial, one_mul]
 /- `Finsupp.prod` works over a Finset. If the Finset is empty then the product is set equal to `1`.
 However, the Finset is not empty. -/
-  have : (sqFreeMonomial.supp M).Nonempty := by
-    rw [Finset.nonempty_iff_ne_empty]
+  have : (sqFreeMonomial.supp M).Nonempty
+  · rw [Finset.nonempty_iff_ne_empty]
     intro h'
     have hM2' := hM2
     rw [sqFreeMonomial.eq_mono, h', mono_empty_eq_one] at hM2'
