@@ -71,8 +71,8 @@ noncomputable def s (A : Finset X) : X →₀ ℕ where
   toFun := fun x ↦ if x ∈ A then 1 else 0
   mem_support_toFun := by
     intro a
-    constructor
-    <;> intro h
+    constructor <;>
+      intro h
     · simpa [ne_eq, ite_eq_right_iff, one_ne_zero, imp_false, not_not]
     · by_contra h'
       have : (fun x ↦ if x ∈ A then 1 else 0) a = 0
@@ -104,11 +104,11 @@ lemma s_eq_elem_elem {A B : Finset X} {x : X} (h1 : s A = s B) (h2 : x ∈ A) : 
   exact (s_eq_one_iff B x).mp this
 
 lemma s_eq_iff_supp_eq (A B : Finset X) : s A = s B ↔ A = B := by
-  constructor
-  <;> intro h
+  constructor <;>
+    intro h
   · ext x
-    constructor
-    <;> intro h'
+    constructor <;>
+      intro h'
     · exact s_eq_elem_elem h h'
     · exact s_eq_elem_elem h.symm h'
   · simp_all only
@@ -419,7 +419,7 @@ First, we need to prove some lemmas to help with the proofs.
 /-- If a monomial `m` is contained in the span of a basis of monomials, there must be an
 element of the basis dividing `m`. *From Amelia* -/
 lemma mem_span_exists_dvd_mem_basis {S : Set (X →₀ ℕ)} (s : X →₀ ℕ)
-    (h : monomial s 1 ∈ Ideal.span ((fun s => monomial s (1 : R)) '' S)) :
+    (h : monomial s 1 ∈ Ideal.span ((fun s ↦ monomial s (1 : R)) '' S)) :
     ∃ i ∈ S, monomial i (1 : R) ∣ monomial s 1 := by
  classical
  rcases mem_ideal_span_monomial_image_iff_dvd.1 h s (by
@@ -430,7 +430,7 @@ lemma mem_span_exists_dvd_mem_basis {S : Set (X →₀ ℕ)} (s : X →₀ ℕ)
 /-- The basis of a `SqFreeMonomialIdeal` cna be reformulated in terms of a function on a collection
 of Finsupps. -/
 lemma SqFreeMonomialIdeal.basis_eq (I : SqFreeMonomialIdeal X R) : {m | ∃ M ∈ I.basis, M.val = m} =
-    ((fun k => monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
+    ((fun k ↦ monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
   ext y
   constructor
   · rintro ⟨M, hM1, hM2⟩
@@ -454,7 +454,7 @@ equal to the output. -/
 /-- Alternative formulation of the ideal of a `SqFreeMonomialIdeal` in terms of a function on a
 collection of Finsupps. -/
 lemma SqFreeMonomialIdeal.ideal_eq' (I : SqFreeMonomialIdeal X R) :
-    I.ideal = Ideal.span ((fun k => monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
+    I.ideal = Ideal.span ((fun k ↦ monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
   rw [SqFreeMonomialIdeal.ideal_eq, SqFreeMonomialIdeal.basis_eq]
 
 /-- If `y` is a member of the faces of an `AbstractSimplicialComplex`, `Δ` then the square free
