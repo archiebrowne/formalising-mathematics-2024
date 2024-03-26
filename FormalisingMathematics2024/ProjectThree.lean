@@ -49,6 +49,8 @@ namespace ProjectThree
 which the polynomials are defined. -/
 variable {X R : Type} [CommRing R] [Nontrivial R] [NoZeroDivisors R]
 
+/- # AbstractSimplicialComplex -/
+
 /-- An `AbstractSimplicialComplex X` is a collection of finite sets of `X` which is downward closed
 with respect to set inclusion. -/
 structure AbstractSimplicialComplex (X : Type) where
@@ -64,6 +66,8 @@ field. -/
 instance : Membership (Finset X) (AbstractSimplicialComplex X) :=
   ⟨fun f Δ => f ∈ Δ.faces⟩
 
+/- # Basic API for Square Free Monomials -/
+
 /-- Indicator function on a `Finset`, implemented as a `Finsupp`. Used as the support for
 squarefree monomials. -/
 noncomputable def s (A : Finset X) : X →₀ ℕ where
@@ -78,8 +82,6 @@ noncomputable def s (A : Finset X) : X →₀ ℕ where
       have : (fun x ↦ if x ∈ A then 1 else 0) a = 0
       · simpa only [ite_eq_right_iff, one_ne_zero, imp_false]
       contradiction
-
-/- # Basic API for Square Free Monomials -/
 
 @[simp]
 lemma s_support_eq (A : Finset X) : (s A).support = A := rfl
@@ -303,6 +305,11 @@ lemma mono_supp_sub_mem {u v : Finset X} {I : SqFreeMonomialIdeal X R}
   obtain ⟨r, hr⟩ := subset_mono_dvd R h2
   simpa [hr] using Ideal.mul_mem_right r _ h1
 
+lemma mono_mem_dvd_mem {u v : Finset X} {I : SqFreeMonomialIdeal X R}
+    (h1 : monomial (s u) (1 : R) ∈ I.ideal) (h2 : monomial (s u) (1 : R) ∣ monomial (s v) 1) :
+    monomial (s v) 1 ∈ I.ideal :=
+  mono_supp_sub_mem h1 (dvd_mono_subset R h2)
+
 /- The following two lemmas will be important in proving that `∅` is a member of the
 `stanleyReisnerComplex. `-/
 
@@ -333,10 +340,9 @@ is zero. -/
 is zero. -/
   obtain ⟨y, hy⟩ := this
   use y
-  constructor
-  · exact hy
-  · apply zero_pow'
-    exact s_mem_ne_zero (M.supp) y hy
+  refine ⟨hy, ?_⟩
+  apply zero_pow'
+  exact s_mem_ne_zero (M.supp) y hy
 
 /-- If `1` is not in the basis of a square free monomial ideal, then it is not in the ideal. -/
 lemma one_nelem_basis_nelem_span (I : SqFreeMonomialIdeal X R) (h : 1 ∉ I.basis) : 1 ∉ I.ideal := by
@@ -446,10 +452,9 @@ equal to the output. -/
   · rintro ⟨k, ⟨M, ⟨hM, hk1⟩⟩, hk2⟩
     dsimp at hk2
     use M
-    constructor
-    · exact hM
-    · rw [← hk2, ← hk1]
-      exact sqFreeMonomial.eq_mono M
+    refine ⟨hM, ?_⟩
+    rw [← hk2, ← hk1]
+    exact sqFreeMonomial.eq_mono M
 
 /-- Alternative formulation of the ideal of a `SqFreeMonomialIdeal` in terms of a function on a
 collection of Finsupps. -/
