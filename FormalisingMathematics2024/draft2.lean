@@ -3,25 +3,23 @@ import Mathlib.Data.MvPolynomial.CommRing
 import Mathlib.RingTheory.Polynomial.Basic
 import Mathlib.Data.MvPolynomial.Basic
 
-open MvPolynomial Classical
-variable {X K : Type} [CommSemiring K]
+/-!
 
+# Questions / ToDo's
 
-/-
-attempt using a structure for square free monomials: `SqFreeMonomial`
-
-* When I say sq free monomial, implicitly I mean it is monic.
-
-PROBLEMS/QUESTIONS:
-* why are do errors disappear when typing `noncomputable` and is it okay to use?
-* Need to decide on wether `IsSqFreeMonomial` is a good definition or not
-* Should I create a coercion from `m : SqFreeMonomial` to `MvPolynomial` by returning `m.poly`. What
-  are the implications of this? ARE COERCIONS THE CORRECT THING TO DO? or should I just make def's ?
-* Need to create more API in general for `s`.
-* Create new clean document with progress so far.
-* What is difference between `def` and `instance`? !!!!
+* What is a subtype, and is it relevant to me for creating Stanley Reisner Complex (need monomials
+  *not* in a `SqFreeMonomialIdeal`)
+* How shouuld I handle coercions
+* How should I handle Membership instances etc
+* What is difference between `def` and `instance`?
+* How should I be using sections and variables?
 
 -/
+
+open MvPolynomial Classical
+namespace ProjectThree
+
+variable {X K : Type} [CommSemiring K]
 
 /-- An abstract simplicial complex is a collection of finite sets which is downward closed with
 respect to set inclusion. -/
@@ -30,9 +28,11 @@ structure AbstractSimplicialComplex (X : Type) where
   empty_mem : ∅ ∈ faces
   down_closed : ∀ {s t}, s ∈ faces → t ⊆ s → t ∈ faces
 
+/-- Identify an `AbstractSimplicialComplex` with its `faces` field. -/
 instance : Membership (Finset X) (AbstractSimplicialComplex X) :=
   ⟨fun f Δ => f ∈ Δ.faces⟩
 
+/-- Finsupp used to index squarefree monomials. -/
 noncomputable def s (A : Finset X) : X →₀ ℕ where
   support := A
   toFun := fun x ↦ if x ∈ A then 1 else 0
@@ -57,6 +57,7 @@ lemma s_eq_zero_or_one (A : Finset X) (x : X) : (s A) x = 0 ∨ (s A) x = 1 := b
   simp_rw [s_eq_one_iff, s_eq_zero_iff]
   exact em' (x ∈ A)
 
+/-- The monomial with variables according to a Finset. -/
 noncomputable def monomialSupportedByFinset (K : Type) (A : Finset X) [CommSemiring K] :
   MvPolynomial X K := monomial (s A) 1
 
@@ -64,82 +65,48 @@ noncomputable def monomialSupportedByFinset (K : Type) (A : Finset X) [CommSemir
 lemma monomialSupportedByFinset_def (K : Type) (A : Finset X) [CommSemiring K] :
     monomialSupportedByFinset K A = monomial (s A) 1 := by rfl
 
+/-- The type of square free monomials. Here a monomial means a multivariate polynomial with a single
+term. Squarefree means no variable has exponent greater than 1. -/
 structure SqFreeMonomial (X K : Type) [CommSemiring K] where
 /- The variables to be included in the polynomial. Typically the `support` of an `MvPolynomial`
 is a Finsupp telling you the exponents of each variable. `supp` is simply the domain of such
 a function. -/
   supp : Finset X
 /- The underlying polynomial. -/
-  poly : MvPolynomial X K
+  poly : MvPolynomial X K -- **Don't need to include this** If I don't need this then I don't need the coercion!
 /- `poly` is a monomial with coefficient `1 : K` and exponents all 1 on `supp`. This is done by
 constructing the Finsupp `s supp`. -/
-  eq_mono : poly = monomial (s supp) 1
+  eq_mono : poly = monomial (s supp) 1 -- **Don't need to include this**
 
-lemma supp_poly (m : SqFreeMonomial X K) : support m.poly = {s m.supp} := by
-  rw [m.eq_mono]
-  rw [support_monomial]
-  simp only [ite_eq_right_iff]
-  intro h
--- How to prove 1 ≠ 0 ?!!!
-  sorry
+/-- An `MvPolynomial`, `m` is a square free monomial if we can find an element of `SqFreeMonomial`
+with `m` as the `poly` field. -/
+def IsSqFreeMonomial (m : MvPolynomial X K) : Prop := ∃ n : SqFreeMonomial X K, m = n.poly
 
--- for a square free monomial, the support is either a single element, or it is empty. i.e the
--- monomial is either `0` or a single term
-lemma asdf (m : SqFreeMonomial X K) : (∃ f, support m.poly = {f}) ∨ support m.poly = ∅ := by
-  rcases eq_or_ne m.poly 0 with (h1 | h2)
-  · right
-    rwa [support_eq_empty]
-  · left
-    use ⟨m.supp, fun w ↦ if w ∈ m.supp then 1 else 0, by sorry⟩
-    ext y
-    constructor
-    · intro h1
-      rw [Finset.mem_singleton]
-      sorry
-    sorry
-
-variable (m : SqFreeMonomial X K)
-#check support m.poly
-
-#check Finsupp
--- define all instances for EQ, add etc
-
--- Coe ? Is this the way to do this?
+/-- Coercion instance identifying any `SqFreeMonomial` with its `poly`. -/
 instance SqFreeMonomial.toMvPolynomial : Coe (SqFreeMonomial X K) (MvPolynomial X K) where
   coe := fun x ↦ x.poly
 
-
 -- **Don't understand this error** adding `noncomputable` stops it.
+/-- Given a finset view `monomialSupportedByFinset` as a `SqFreeMonomial`  -/
 instance SqFreeMonomialOfFinset (X K : Type) (A : Finset X) [CommSemiring K] : SqFreeMonomial X K where
   supp := A
   poly := monomialSupportedByFinset K A
-  eq_mono := by simp
+  eq_mono := monomialSupportedByFinset_def K A
 
 @[simp]
 lemma sq_free_monomial_of_finset_poly (A : Finset X) : monomialSupportedByFinset K A =
     (SqFreeMonomialOfFinset X K A).poly := by rfl
-
--- **Don't understand this error** adding `noncomputable` stops it.
-instance one_sq_free : SqFreeMonomial X K where
-  supp := Finset.empty
-  poly := 1
-  eq_mono := rfl
-
-#check monic_monomial_eq
-#check monomial_eq_monomial_iff
-#check monomial_eq
-#check Finsupp.prod
--- Using `Coe` to interpret `m` as `m.poly`. Is this the correcrt way to do things?
-lemma prop22a (m : SqFreeMonomial X K) : monomialSupportedByFinset K (m.supp) = m := by
+lemma support_supp_eq (m : SqFreeMonomial X K) : monomialSupportedByFinset K (m.supp) = m := by
   rw [m.eq_mono, monomialSupportedByFinset_def]
 
-lemma prop22b (A : Finset X) : (SqFreeMonomialOfFinset X K A).supp = A := rfl
+lemma supp_of_sq_free_eq_supp (A : Finset X) : (SqFreeMonomialOfFinset X K A).supp = A := rfl
 
 -- would be good to find a way to not include so much calculation, perhaps create more API
-lemma prop22c (m m' : SqFreeMonomial X K) : m.poly ∣ m'.poly ↔ m.supp ⊆ m'.supp := by
+/-- A square free monomial divides another if and only if all of its variables are included in the
+other. For example `xy` divides `wxyz`. -/
+lemma poly_dvd_iff_supp_sub (m m' : SqFreeMonomial X K) : m.poly ∣ m'.poly ↔ m.supp ⊆ m'.supp := by
   constructor
   · rintro ⟨r, hr⟩
-
     sorry
   · intro h
     use monomial (s (m'.supp \ m.supp : Finset X)) 1
@@ -162,24 +129,21 @@ lemma prop22c (m m' : SqFreeMonomial X K) : m.poly ∣ m'.poly ↔ m.supp ⊆ m'
       · sorry
     · rfl
 
-/-- An `MvPolynomial` is a square free monomial if we can find a-/
-def IsSqFreeMonomial (m : MvPolynomial X K) : Prop := ∃ n : SqFreeMonomial X K, m = n.poly
-
 /-- A squarefree monomial ideal is the ideal generated by a collection of squarefree monomials. -/
 structure SqFreeMonomialIdeal (X K : Type) [CommSemiring K] where
   basis : Set (MvPolynomial X K)
-  ideal : Ideal (MvPolynomial X K)
-  ideal_eq_span : ideal = Ideal.span basis
+  ideal : Ideal (MvPolynomial X K) -- **Don't need to include this**
+  ideal_eq_span : ideal = Ideal.span basis -- **Don't need to include this**
   sq_free : ∀ m, m ∈ basis → IsSqFreeMonomial m
 
+/-- Identify a `SqFreeMonomialIdeal` with its `ideal` field. -/
 instance : Membership (MvPolynomial X K) (SqFreeMonomialIdeal X K) :=
   ⟨fun m I => m ∈ I.ideal⟩
 
+-- Instantiate `GaloisConnection` by getting correct functions and types.
+-- Define StanleyReisnerComplex
 def stanleyReisnerComplex (I : SqFreeMonomialIdeal X K) : AbstractSimplicialComplex X where
-  faces := by
-  -- given any `IsSqFreeMonomial m` we have `n : SqFreeMonomial X K` such that `m = n.poly`
-  -- want to return `{n.supp for all n}`.
-  {m.support | IsSqFreeMonomial m ∧ m ∉ I}
+  faces := {(m : SqFreeMonomial X K).supp | m ∉ I}
   empty_mem := _
   down_closed := _
 
@@ -194,14 +158,7 @@ def stanleyReisnerIdeal (Δ : AbstractSimplicialComplex X) : SqFreeMonomialIdeal
       use SqFreeMonomialOfFinset X K f
       rwa [← sq_free_monomial_of_finset_poly f, eq_comm]
 
-def faceRing (Δ : AbstractSimplicialComplex X) : Ring (MvPolynomial X K) := (MvPolynomial X K) ⧸ (stanleyReisnerIdeal Δ).ideal
+-- Define Face Ring as quotient of polynomial ring by `stanleyReisnerIdeal`
 
 
-
-#check GaloisConnection
-def suppOfMonomial (m : SqFreeMonomial X K) :  := support m.poly
--- galois connection
-theorem galois_connection_ASC_monomial : GaloisConnection suppOfMonomial monomialSupportedByFinset := by sorry
-
--- Define the face ring
--- Proposition 2.7
+end ProjectThree
