@@ -6,6 +6,7 @@ import Mathlib.RingTheory.MvPolynomial.Ideal
 import Mathlib.Data.Subtype
 
 /-!
+
 # The Stanley-Reisner Correspondence
 
 The Stanley-Reisner Correspondence provides a link between abstract simplicial complexes and
@@ -37,6 +38,7 @@ the Stanley-Reisner face ring.
 - See [*Combinatorics and Commutative Algebra - R.P.Stanley*] for the original source.
 - This file follows [*A Survey of Stanley-Reisner Theory -  C.A.Francisco, J.Mermin, J.Schweig*] for
 the formalisation.
+
 -/
 
 open MvPolynomial Classical
