@@ -85,7 +85,7 @@ noncomputable def s (A : Finset X) : X →₀ ℕ where
       · simpa only [ite_eq_right_iff, one_ne_zero, imp_false]
       contradiction
 
-/- # Basic API for Monomials -/
+/- # Basic API for Square Free Monomials -/
 
 @[simp]
 lemma s_support_eq (A : Finset X) : (s A).support = A := rfl
@@ -124,7 +124,7 @@ lemma mono_empty_eq_one : (monomial (s ∅)) 1 = (1 : MvPolynomial X R) := rfl
 lemma s_mem_ne_zero (A : Finset X) (x : X) (h : x ∈ A) : (s A) x ≠ 0 := by
   simp_all [(s_eq_one_iff A x).mpr h]
 
-/- # Square Free Monomials -/
+/- # sqFreeMonomial -/
 
 /-- Subtype for square free monomials. A `MvPolynomial` is a `sqFreeMonomial` if it can be
 written as a monomial with support an indicator function, and coefficient `1`. -/
@@ -203,17 +203,31 @@ lemma poly_dvd_iff_supp_sub (m m' : sqFreeMonomial X R) : m.val ∣ m'.val ↔ m
     by_contra H
     rw [if_neg H] at subset1
     linarith
-  · -- this part is in previous file
-    intro h
+  · intro h
     use monomial (s (m'.supp \ m.supp)) 1
     rw [m'.eq_mono, m.eq_mono, monomial_mul, mul_one, monomial_eq_monomial_iff]
     left
     refine ⟨?_, rfl⟩
     ext x
+    rw [Finsupp.add_apply]
     rcases mem_or_mem_sdiff_or_nmem m.supp m'.supp x with (h1 | h2 | h3)
-    · sorry
-    · sorry
-    · sorry
+    · have : (s (sqFreeMonomial.supp m' \ sqFreeMonomial.supp m)) x = 0
+      · simpa [s_eq_zero_iff] using (Finset.not_mem_sdiff_of_mem_right h1)
+      rw [(s_eq_one_iff (sqFreeMonomial.supp m') x).mpr (h h1),
+          (s_eq_one_iff (sqFreeMonomial.supp m) x).mpr h1, this]
+    · have : (s (sqFreeMonomial.supp m)) x = 0
+      · simp_all only [s_eq_zero_iff, Finset.mem_sdiff, not_false_eq_true]
+      have : (s (sqFreeMonomial.supp m')) x = 1
+      · simp_all only [s_eq_one_iff, Finset.mem_sdiff]
+      simp_all only [Finset.mem_sdiff, zero_add]
+      rw [eq_comm, s_eq_one_iff]
+      exact Finset.mem_sdiff.mpr h2
+    · have : (s (sqFreeMonomial.supp m)) x = 0
+      · simpa [s_eq_zero_iff] using Finset.not_mem_mono h h3
+      have : (s (sqFreeMonomial.supp m' \ sqFreeMonomial.supp m)) x = 0
+      · simp_all only [s_eq_zero_iff, Finset.mem_sdiff, false_and, not_false_eq_true]
+      simp_all only [add_zero]
+      exact (s_eq_zero_iff (sqFreeMonomial.supp m') x).mpr h3
 
 variable (R)
 
@@ -242,7 +256,7 @@ lemma dvd_mono_subset {u v : Finset X} (h : monomial (s u) (1 : R) ∣ monomial 
 
 variable {R}
 
-/- # Square Free Monomial Ideals -/
+/- # SqFreeMonomialIdeal -/
 
 /-- A basis for an ideal of `sqFreeMonomial`'s which does not contain `1`. -/
 structure SqFreeMonomialIdeal (X R : Type) [CommRing R] [Nontrivial R] where
@@ -349,14 +363,22 @@ corresponding to the faces of `Δ `. -/
 def faceRing (Δ : AbstractSimplicialComplex X) :=
     (MvPolynomial X R) ⧸ (stanleyReisnerIdeal X R Δ).ideal
 
+/- # A Bijection between Abstract Simplicial Complexes and Square-Free Monomial Ideals -/
 
--- Prop 2.7 provides the bijection between abstract simplicial complexes and squarefree monomial ideals
-section expr
-variable {σ R : Type*}
+/-
+In this section, we realise the bijection between abstract simplicial complexes and square free
+monomial ideals revealed by the Stanley-Reisner Correspondednce. This is shown in two lemmas
+observing that `stanleyReisnerComplex` and `stanleyReisnerIdeal` are inverses of eachother:
 
-variable [CommSemiring R] [NeZero (1 : R)]
+- `src_of_sri_of_asc_eq_asc`
+- `sri_of_asc_of_ideal_eq_ideal`
 
-lemma mem_span_exists_dvd_mem_basis {S : Set (σ →₀ ℕ)} (s : σ →₀ ℕ)
+First, we need to prove some lemmas to help with the proofs.
+-/
+
+/-- *From Amelia* If a monomial `m` is contained in the span of a basis of monomials, there must be an
+element of the basis dividing `m`. -/
+lemma mem_span_exists_dvd_mem_basis {S : Set (X →₀ ℕ)} (s : X →₀ ℕ)
     (h : monomial s 1 ∈ Ideal.span ((fun s => monomial s (1 : R)) '' S)) :
     ∃ i ∈ S, monomial i (1 : R) ∣ monomial s 1 := by
  classical
@@ -364,8 +386,9 @@ lemma mem_span_exists_dvd_mem_basis {S : Set (σ →₀ ℕ)} (s : σ →₀ ℕ
   simp only [support_monomial, if_neg one_ne_zero, Finset.mem_singleton_self]) with ⟨j, hS, hj⟩
  use j, hS
  simpa [coeff_monomial, if_pos] using hj
-end expr
 
+/-- The basis of a `SqFreeMonomialIdeal` cna be reformulated in terms of a function on a collection
+of Finsupps. -/
 lemma SqFreeMonomialIdeal.basis_eq (I : SqFreeMonomialIdeal X R) : {m | ∃ M ∈ I.basis, M.val = m} =
     ((fun k => monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
   ext y
@@ -385,10 +408,14 @@ lemma SqFreeMonomialIdeal.basis_eq (I : SqFreeMonomialIdeal X R) : {m | ∃ M �
     · rw [← hk2, ← hk1]
       exact sqFreeMonomial.eq_mono M
 
+/-- Alternative formulation of the ideal of a `SqFreeMonomialIdeal` in terms of a function on a
+collection of Finsupps. -/
 lemma SqFreeMonomialIdeal.ideal_eq' (I : SqFreeMonomialIdeal X R) :
     I.ideal = Ideal.span ((fun k => monomial k (1 : R)) '' {s (M.supp) | M ∈ I.basis}) := by
   rw [SqFreeMonomialIdeal.ideal_eq, SqFreeMonomialIdeal.basis_eq]
 
+/-- If `y` is a member of the faces of an `AbstractSimplicialComplex`, `Δ` then the square free
+monomial corresponding to `y` cannot be contained in the `stanleyReisnerIdeal` generated by `Δ`. -/
 lemma mem_faces_mono_nmem_sri_ideal (Δ : AbstractSimplicialComplex X) (y : Finset X) (h : y ∈ Δ.faces) :
     monomial (s y) 1 ∉ (stanleyReisnerIdeal X R Δ).ideal := by
   intro h'
@@ -406,6 +433,36 @@ lemma mem_faces_mono_nmem_sri_ideal (Δ : AbstractSimplicialComplex X) (y : Fins
   rw [eq1] at sub1
   apply hf1
   exact Δ.down_closed h sub1
+
+/-- If a set `A` is contained in the span of another `B` then the span of `A` is also contained. -/
+lemma sub_span_span_sub {A B : Set (MvPolynomial X R)} (h : A ⊆ Ideal.span B) :
+    SetLike.coe (Ideal.span A) ⊆ Ideal.span B := by
+  simp only [SetLike.coe_subset_coe, Ideal.span_le.mpr h]
+
+/-- Spans of two sets `A`, `B` are equal if and only if each is contained in the span of the other-/
+lemma span_eq_iff_basis_sub (A B : Set (MvPolynomial X R)) :
+    Ideal.span A = Ideal.span B ↔ A ⊆ Ideal.span B ∧ B ⊆ Ideal.span A := by
+  constructor
+  · intro h
+    constructor
+    · have : A ⊆ Ideal.span A := Ideal.subset_span
+      simp_all only
+    · have : B ⊆ Ideal.span B := Ideal.subset_span
+      simp_all only
+  · intro ⟨hA, hB⟩
+    rw [← SetLike.coe_set_eq, Set.Subset.antisymm_iff]
+    exact ⟨sub_span_span_sub hA, sub_span_span_sub hB⟩
+
+/-- If an element is a member of the basis of a span, it is in the span. -/
+lemma mem_basis_mem_span {x : MvPolynomial X R} {A : Set (MvPolynomial X R)} (h : x ∈ A) :
+    x ∈ Ideal.span A := by
+  apply Ideal.subset_span
+  simp_all only
+
+/- Now we are ready to proceed with the proofs that composing `stanleyReisnerIdeal` and
+`stanleyReisnerComplex` gives the identity both ways round. -/
+
+-- ## Part One of the Bijection
 
 /-- For `Δ` an `AbstractSimplicialComplex`, taking the `stanleyReisnerIdeal` and then the
 `stanleyReisnerComplex` gives `Δ`. -/
@@ -432,24 +489,7 @@ lemma src_of_sri_of_asc_eq_asc (Δ : AbstractSimplicialComplex X) :
     have := @mem_faces_mono_nmem_sri_ideal X R _ _ _ Δ y h'
     contradiction
 
-/-- If a set `A` is contained in the span of another `B` then the span of `A` is also contained. -/
-lemma sub_span_span_sub {A B : Set (MvPolynomial X R)} (h : A ⊆ Ideal.span B) :
-    SetLike.coe (Ideal.span A) ⊆ Ideal.span B := by
-  simp only [SetLike.coe_subset_coe, Ideal.span_le.mpr h]
-
-/-- Spans of two sets `A`, `B` are equal if and only if each is contained in the span of the other-/
-lemma span_eq_iff_basis_sub (A B : Set (MvPolynomial X R)) :
-    Ideal.span A = Ideal.span B ↔ A ⊆ Ideal.span B ∧ B ⊆ Ideal.span A := by
-  constructor
-  · intro h
-    constructor
-    · have : A ⊆ Ideal.span A := Ideal.subset_span
-      simp_all only
-    · have : B ⊆ Ideal.span B := Ideal.subset_span
-      simp_all only
-  · intro ⟨hA, hB⟩
-    rw [← SetLike.coe_set_eq, Set.Subset.antisymm_iff]
-    exact ⟨sub_span_span_sub hA, sub_span_span_sub hB⟩
+-- ## Part Two of the Bijection
 
 /-- For `I` a `SqFreeMonomialIdeal`, taking the `stanleyReisnerComplex` and then the
 `stanleyReisnerIdeal` gives `I`. -/
@@ -459,56 +499,37 @@ lemma sri_of_asc_of_ideal_eq_ideal (I : SqFreeMonomialIdeal X R) :
   constructor
   · intro m ⟨M, hM1, hM2⟩
     rw [sri_basis_eq] at hM1
+    rw [sqFreeMonomial.eq_mono M] at hM2
     obtain ⟨f, hf1, hf2⟩ := hM1
-    rw [src_faces_eq] at hf1
-
-
-    --rw [SqFreeMonomialIdeal.ideal_eq'] at h
-
-
-  -- --intro h
-  --   --rw [SqFreeMonomialIdeal.ideal_eq, sri_basis_eq] at h
-  --   rintro ⟨f, hf1, hf2⟩
-  --   by_contra H
-  --   apply hf1
-  --   intro h'
-  --   have := mem_faces_mono_nmem_sri_ideal R (stanleyReisnerComplex I)
-  --   rw [src_faces_eq] at this
-  --   specialize this f (by sorry)
-  --   rw [SqFreeMonomialIdeal.ideal_eq] at this
-    -- this is the same issue as the previous lemma
-    sorry
-  · intro h'
-    dsimp
-    use x.supp
-    constructor
-    · push_neg
-      rw [← sqFreeMonomial.eq_mono]
-      have : x.val ∈ {m | ∃ M ∈ I.basis, M.val = m}
-      · use x
-      exact Ideal.subset_span this
-    · apply Subtype.eq
-      simpa [mono_finset] using (sqFreeMonomial.eq_mono x).symm
-
-
-#check (MvPolynomial X R)ˣ
-#check MvPolynomial.X
-example (A : Finset X) : Squarefree (monomial (s A) (1 : R)) := by -- seems tough
-  intro x ⟨r, hr⟩
-  unfold IsUnit
-  simp only [monomial_eq, map_one, one_mul] at hr
-  sorry
-
-
--- THIS IS A MONOID, to prove would need to come up with a supp definition as above
-def monomial_subtype (X R : Type) [CommRing R] := {m : MvPolynomial X R // ∃ (f : X →₀ ℕ), m = monomial f (1 : R)}
-
-
-
-
-
-
-
-
+    have hfM : f = M.supp
+    · rw [← @mono_s_eq_iff_supp_eq X R]
+      have := mono_eq_val_eq hf2
+      rw [mono_finset] at this
+      dsimp only at this
+      rwa [sqFreeMonomial.eq_mono] at this
+    rw [hfM, src_faces_eq] at hf1
+    by_contra H
+    dsimp only [Set.mem_setOf_eq] at hf1
+    push_neg at hf1
+    rw [← hM2, ← SqFreeMonomialIdeal.ideal_eq] at H
+    simp_all only [SetLike.mem_coe, not_true_eq_false]
+  · intro m ⟨M, hM1, hM2⟩
+    rw [sri_basis_eq, src_faces_eq]
+    apply mem_basis_mem_span
+    · use M
+      constructor
+      · use M.supp
+        constructor
+        · dsimp only [Set.mem_setOf_eq]
+          push_neg
+          rw [SqFreeMonomialIdeal.ideal_eq]
+          apply mem_basis_mem_span
+          use M
+          exact ⟨hM1, sqFreeMonomial.eq_mono M⟩
+        · apply Subtype.eq
+          rw [mono_finset]
+          dsimp only
+          exact (sqFreeMonomial.eq_mono M).symm
+      · exact hM2
 
 end ProjectThree
