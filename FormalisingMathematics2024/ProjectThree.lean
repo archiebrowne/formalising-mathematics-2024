@@ -315,7 +315,7 @@ lemma mono_mem_dvd_mem {u v : Finset X} {I : SqFreeMonomialIdeal X R}
 
 /-- If `1` is not in the basis of a square free monomial ideal, then the ideal is
 contained in the kernel of the evaluation map of `MvPolynomial`s at zero. -/
-lemma one_nelem_basis_le_ker (I : SqFreeMonomialIdeal X R) (h : 1 ∉ I.basis) :
+lemma one_nelem_basis_le_ker (I : SqFreeMonomialIdeal X R) :
     I.ideal ≤ RingHom.ker ((eval (fun _ ↦ 0 : X → R) : MvPolynomial X R →+* R)) := by
 /- The ordering `≤` on ideals corresponds to the ordering `⊆` on their coercions to sets. -/
   rw [SqFreeMonomialIdeal.ideal_eq, Ideal.span_le]
@@ -333,6 +333,8 @@ However, the Finset is not empty. -/
     · apply Subtype.eq
       simpa [hM2] using hM2'.symm
     simp_all only [not_true_eq_false]
+    absurd hM1
+    exact I.one_nelem
 /- A `Finsupp.prod` is equal to zero in an integral domain if and one of the terms in the product
 is zero. -/
   rw [Finsupp.prod_eq_zero_iff, s_support_eq]
@@ -347,7 +349,7 @@ is zero. -/
 /-- If `1` is not in the basis of a square free monomial ideal, then it is not in the ideal. -/
 lemma one_nelem_basis_nelem_span (I : SqFreeMonomialIdeal X R) : 1 ∉ I.ideal := by
   intro h'
-  have := one_nelem_basis_le_ker I (I.one_nelem) h'
+  have := one_nelem_basis_le_ker I h'
   simp_all only [RingHom.mem_ker, map_one, one_ne_zero]
 
 /- # Stanley-Reisner Correspondence -/
