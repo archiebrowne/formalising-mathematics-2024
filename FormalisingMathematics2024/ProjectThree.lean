@@ -406,7 +406,7 @@ lemma sri_one_nin_ideal (Δ : AbstractSimplicialComplex X) :
   one_nelem_basis_nelem_span (stanleyReisnerIdeal X R Δ)
 
 /-- The stanley reisner face ring of and abstract simplicial complex `Δ`. The elements are the
-monomials corresponding to the faces of `Δ `. -/
+monomials corresponding to the faces of `Δ`. -/
 def faceRing (Δ : AbstractSimplicialComplex X) :=
     (MvPolynomial X R) ⧸ (stanleyReisnerIdeal X R Δ).ideal
 
